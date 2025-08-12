@@ -1,0 +1,1867 @@
+{% extends "base_new.html" %}
+
+{% block title %}六楼管理 - 房间管理 - 租房管理系统{% endblock %}
+
+{% block page_title %}六楼管理 - 房间列表{% endblock %}
+
+{% block extra_css %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rooms.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index6') }}"><i class="fas fa-building"></i>主页</a>
+                </li>
+                <li class="breadcrumb-item active">房间管理</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <!-- 统计概览卡片 -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-primary h-100 room-stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ room_stats.total_rooms or 0 }}</h4>
+                                <p class="card-text">总房间数</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-home fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-success h-100 room-stats-card" id="availableRoomsCard"
+                     style="cursor: pointer;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ room_stats.available_rooms or 0 }}</h4>
+                                <p class="card-text">空闲房间</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-warning h-100 room-stats-card" id="occupiedRoomsCard"
+                     style="cursor: pointer;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ room_stats.occupied_rooms or 0 }}</h4>
+                                <p class="card-text">已出租</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-danger h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ room_stats.maintenance_rooms or 0 }}</h4>
+                                <p class="card-text">维修中</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-tools fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-building text-primary"></i>
+                                    房间管理
+                                </h5>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-primary me-2" data-bs-toggle="modal"
+                                        data-bs-target="#addRoomModal">
+                                    <i class="fas fa-plus"></i> 添加房间
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="refreshRoomList()">
+                                    <i class="fas fa-sync-alt"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 楼层快捷筛选 -->
+                        <div class="row mt-3 mb-3">
+                            <div class="col-12">
+                                <div class="floor-filter-tabs">
+                                    <button class="floor-tab active" data-floor="" onclick="filterByFloor('')">
+                                        <i class="fas fa-building me-2"></i>全部楼层
+                                    </button>
+                                    <button class="floor-tab" data-floor="1" onclick="filterByFloor('1')">
+                                        <i class="fas fa-home me-2"></i>一楼
+                                    </button>
+                                    <button class="floor-tab" data-floor="2" onclick="filterByFloor('2')">
+                                        <i class="fas fa-home me-2"></i>二楼
+                                    </button>
+                                    <button class="floor-tab" data-floor="3" onclick="filterByFloor('3')">
+                                        <i class="fas fa-home me-2"></i>三楼
+                                    </button>
+                                    <button class="floor-tab" data-floor="4" onclick="filterByFloor('4')">
+                                        <i class="fas fa-home me-2"></i>四楼
+                                    </button>
+                                    <button class="floor-tab" data-floor="5" onclick="filterByFloor('5')">
+                                        <i class="fas fa-home me-2"></i>五楼
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 搜索和筛选 -->
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="searchRoom"
+                                           placeholder="搜索房号或楼层...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filterStatus">
+                                    <option value="">所有状态</option>
+                                    <option value="1">空闲</option>
+                                    <option value="2">已出租</option>
+                                    <option value="3">维修中</option>
+                                    <option value="4">停用</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filterFloor">
+                                    <option value="">所有楼层</option>
+                                    <option value="1">一楼</option>
+                                    <option value="2">二楼</option>
+                                    <option value="3">三楼</option>
+                                    <option value="4">四楼</option>
+                                    <option value="5">五楼</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-primary w-100" onclick="filterRooms()">
+                                    <i class="fas fa-filter"></i> 筛选
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 房间列表表格 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list"></i>
+                            房间详细信息
+                            <span class="badge bg-secondary ms-2">共 {{ rooms_list|length }} 间房</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped" id="roomsTable">
+                                <thead class="table-dark">
+                                <tr>
+                                    <th width="8%">房号</th>
+                                    <th width="12%">房型</th>
+                                    <th width="12%">押金</th>
+                                    <th width="12%">租金</th>
+                                    <th width="10%">状态</th>
+                                    <th width="15%">水表编号</th>
+                                    <th width="15%">电表编号</th>
+                                    <th width="12%">创建时间</th>
+                                    <th width="16%">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% if rooms_list %}
+                                    {% for room in rooms_list %}
+                                        <tr data-room-id="{{ room.id }}" class="room-row">
+                                            <td>
+                                                <div class="room-number-container">
+                                                    <div class="room-badge">
+                                                        <i class="fas fa-door-open me-2"></i>
+                                                        <span class="room-number">{{ room.room_number }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="room-type-container">
+                                                    <span class="badge bg-info room-type-badge">
+                                                        <i class="fas fa-home me-1"></i>
+                                                        {{ room.room_type }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="deposit-display">
+                                                    <div class="deposit-icon">
+                                                        <i class="fas fa-shield-alt"></i>
+                                                    </div>
+                                                    <div class="deposit-amount">
+                                                        <span class="deposit-currency">¥</span>
+                                                        <span class="deposit-value">{{ "%.2f"|format(room.deposit) }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="rent-display">
+                                                    <div class="rent-icon">
+                                                        <i class="fas fa-coins"></i>
+                                                    </div>
+                                                    <div class="rent-amount">
+                                                        <span class="currency">¥</span>
+                                                        <span class="amount">{{ "%.2f"|format(room.base_rent) }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if room.room_status == 1 %}
+                                                    <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle"></i> 空闲
+                                                </span>
+                                                {% elif room.room_status == 2 %}
+                                                    <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-user"></i> 已出租
+                                                </span>
+                                                {% elif room.room_status == 3 %}
+                                                    <span class="badge bg-danger">
+                                                    <i class="fas fa-tools"></i> 维修中
+                                                </span>
+                                                {% elif room.room_status == 4 %}
+                                                    <span class="badge bg-secondary">
+                                                    <i class="fas fa-ban"></i> 停用
+                                                </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="meter-info water-meter">
+                                                    <div class="meter-icon">
+                                                        <i class="fas fa-tint"></i>
+                                                    </div>
+                                                    <code class="meter-number">{{ room.water_meter_number }}</code>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="meter-info electricity-meter">
+                                                    <div class="meter-icon">
+                                                        <i class="fas fa-bolt"></i>
+                                                    </div>
+                                                    <code class="meter-number">{{ room.electricity_meter_number }}</code>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="date-info">
+                                                    <div class="date-icon">
+                                                        <i class="fas fa-calendar-plus"></i>
+                                                    </div>
+                                                    <small class="creation-time">
+                                                        {{ room.created_at.strftime('%Y-%m-%d') if room.created_at else '-' }}
+                                                    </small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons-container">
+                                                    <div class="action-btn-grid">
+                                                        <button type="button" class="action-btn view-btn"
+                                                                onclick="viewRoom({{ room.id }})" title="查看详情">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button type="button" class="action-btn edit-btn"
+                                                                onclick="editRoom({{ room.id }})" title="编辑">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button type="button" class="action-btn delete-btn"
+                                                                onclick="deleteRoom({{ room.id }})" title="删除">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <div class="text-muted">
+                                                <i class="fas fa-home fa-3x mb-3"></i>
+                                                <p class="mb-0">暂无房间数据</p>
+                                                <small>点击上方"添加房间"按钮来添加第一间房</small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加房间模态框 -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1" aria-labelledby="addRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content add-room-modal">
+                <div class="modal-header add-room-header">
+                    <h5 class="modal-title" id="addRoomModalLabel">
+                        <i class="fas fa-plus-circle me-2"></i> 添加新房间
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form id="addRoomForm">
+                    <div class="modal-body p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="roomNumber" class="form-label fw-semibold">
+                                        <i class="fas fa-door-open text-primary me-2"></i>房号 <span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="roomNumber"
+                                           name="room_number"
+                                           placeholder="请输入房间编号" required>
+                                    <div class="form-text">如：A101、B201、301等</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="roomType" class="form-label fw-semibold">
+                                        <i class="fas fa-home text-primary me-2"></i>房型 <span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-select-lg" id="roomType" name="room_type" required>
+                                        <option value="">请选择房型</option>
+                                        <option value="单间">单间</option>
+                                        <option value="一室一厅">一室一厅</option>
+                                        <option value="两室一厅">两室一厅</option>
+                                        <option value="套房">套房</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="baseRent" class="form-label fw-semibold">
+                                        <i class="fas fa-coins text-success me-2"></i>租金 (元) <span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-success text-white">¥</span>
+                                        <input type="number" step="0.01" class="form-control" id="baseRent"
+                                               name="base_rent"
+                                               placeholder="0.00" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="editDeposit" class="form-label fw-semibold">
+                                        <i class="fas fa-shield-alt text-warning me-2"></i>押金 (元) <span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-warning text-dark">¥</span>
+                                        <input type="number" step="0.01" class="form-control" id="deposit"
+                                               name="deposit"
+                                               placeholder="0.00" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="roomStatus" class="form-label fw-semibold">
+                                        <i class="fas fa-info-circle text-info me-2"></i>房间状态 <span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-select-lg" id="roomStatus" name="room_status"
+                                            required>
+                                        <option value="">请选择房间状态</option>
+                                        <option value="1" selected>空闲</option>
+                                        <option value="2">已出租</option>
+                                        <option value="3">维修中</option>
+                                        <option value="4">停用</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="waterMeter" class="form-label fw-semibold">
+                                        <i class="fas fa-tint text-primary me-2"></i>水表编号 <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-primary text-white">
+                                            <i class="fas fa-tint"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="waterMeter"
+                                               name="water_meter_number"
+                                               placeholder="如：WS001" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="electricityMeter" class="form-label fw-semibold">
+                                        <i class="fas fa-bolt text-warning me-2"></i>电表编号 <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-warning text-dark">
+                                            <i class="fas fa-bolt"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="electricityMeter"
+                                               name="electricity_meter_number" placeholder="如：EL001" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i> 取消
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i> 保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑房间模态框 -->
+    <div class="modal fade" id="editRoomModal" tabindex="-1" aria-labelledby="editRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editRoomModalLabel">
+                        <i class="fas fa-edit"></i> 编辑房间信息
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editRoomForm">
+                    <input type="hidden" id="editRoomId" name="room_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editRoomNumber" class="form-label">房号 <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editRoomNumber" name="room_number"
+                                           required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editRoomType" class="form-label">房型 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="editRoomType" name="room_type" required>
+                                        <option value="">请选择房型</option>
+                                        <option value="单间">单间</option>
+                                        <option value="一室一厅">一室一厅</option>
+                                        <option value="两室一厅">两室一厅</option>
+                                        <option value="套房">套房</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editBaseRent" class="form-label">基础租金 (元) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" class="form-control" id="editBaseRent"
+                                           name="base_rent" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editDeposit" class="form-label">押金 (元) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="number" step="0.01" class="form-control" id="editDeposit"
+                                           name="deposit" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editRoomStatus" class="form-label">房间状态 <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" id="editRoomStatus" name="room_status" required>
+                                        <option value="">请选择房间状态</option>
+                                        <option value="1">空闲</option>
+                                        <option value="2">已出租</option>
+                                        <option value="3">维修中</option>
+                                        <option value="4">停用</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editWaterMeter" class="form-label">水表编号 <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editWaterMeter"
+                                           name="water_meter_number" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editElectricityMeter" class="form-label">电表编号 <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="editElectricityMeter"
+                                           name="electricity_meter_number" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存修改
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看房间详情模态框 -->
+    <div class="modal fade" id="viewRoomModal" tabindex="-1" aria-labelledby="viewRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewRoomModalLabel">
+                        <i class="fas fa-eye"></i> 房间详情
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewRoomContent">
+                    <!-- 房间详情内容将通过JavaScript动态加载 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除房间确认模态框 -->
+    <div class="modal fade" id="deleteRoomModal" tabindex="-1" aria-labelledby="deleteRoomModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteRoomModalLabel">
+                        <i class="fas fa-exclamation-triangle"></i> 确认删除房间
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                        <h6 class="mb-3">您确定要删除以下房间吗？</h6>
+                        <div class="alert alert-warning">
+                            <div class="row">
+                                <div class="col-6"><strong>房号：</strong></div>
+                                <div class="col-6" id="deleteRoomNumber">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6"><strong>房型：</strong></div>
+                                <div class="col-6" id="deleteRoomType">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6"><strong>基础租金：</strong></div>
+                                <div class="col-6" id="deleteRoomRent">-</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6"><strong>状态：</strong></div>
+                                <div class="col-6" id="deleteRoomStatus">-</div>
+                            </div>
+                        </div>
+                        <p class="text-danger mb-0">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <strong>警告：此操作不可恢复！</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash"></i> 确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // 搜索功能
+        document.getElementById('searchRoom').addEventListener('input', function () {
+            filterRooms();
+        });
+
+        // 当前选中的楼层
+        let currentFloor = '';
+
+        // 楼层筛选功能
+        function filterByFloor(floor) {
+            currentFloor = floor;
+
+            // 更新楼层标签状态
+            document.querySelectorAll('.floor-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-floor="${floor}"]`).classList.add('active');
+
+            // 同步更新下拉选择框
+            document.getElementById('filterFloor').value = floor;
+
+            // 执行筛选
+            filterRooms();
+
+            // 更新楼层统计
+            updateFloorStats();
+        }
+
+        // 从房间号提取楼层信息
+        function getFloorFromRoomNumber(roomNumber) {
+            // 假设房间号格式为: 101, 201, 301, B101, A201 等
+            // 第一个数字代表楼层
+            const match = roomNumber.match(/(\d)/);
+            return match ? match[1] : null;
+        }
+
+        // 筛选功能
+        function filterRooms() {
+            const searchTerm = document.getElementById('searchRoom').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const floorFilter = document.getElementById('filterFloor').value || currentFloor;
+            const tableRows = document.querySelectorAll('#roomsTable tbody tr[data-room-id]');
+
+            let visibleCount = 0;
+
+            tableRows.forEach(row => {
+                const roomNumberCell = row.querySelector('.room-number');
+                const roomNumber = roomNumberCell ? roomNumberCell.textContent.toLowerCase() : '';
+                const roomType = row.cells[1].textContent.toLowerCase();
+                const statusBadge = row.querySelector('td:nth-child(5) .badge');
+                const roomStatus = statusBadge ? statusBadge.textContent.trim() : '';
+
+                let showRow = true;
+
+                // 搜索筛选
+                if (searchTerm && !roomNumber.includes(searchTerm) && !roomType.includes(searchTerm)) {
+                    showRow = false;
+                }
+
+                // 状态筛选
+                if (statusFilter) {
+                    const statusMap = {
+                        '1': '空闲',
+                        '2': '已出租',
+                        '3': '维修中',
+                        '4': '停用'
+                    };
+                    // 使用includes方法来匹配，因为实际文本可能包含图标和空格
+                    if (!roomStatus.includes(statusMap[statusFilter])) {
+                        showRow = false;
+                    }
+                }
+
+                // 楼层筛选 - 根据房间号第一位数字判断楼层
+                if (floorFilter) {
+                    const roomFloor = getFloorFromRoomNumber(roomNumber);
+                    if (roomFloor !== floorFilter) {
+                        showRow = false;
+                    }
+                }
+
+                if (showRow) {
+                    visibleCount++;
+                    row.style.display = '';
+                    // 添加显示动画
+                    row.style.animation = `fadeInUp 0.3s ease-out ${visibleCount * 0.05}s both`;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // 更新序号
+            updateRowNumbers();
+        }
+
+        // 更新楼层统计
+        function updateFloorStats() {
+            const allRows = document.querySelectorAll('#roomsTable tbody tr[data-room-id]');
+            const floorCounts = {'': 0, '1': 0, '2': 0, '3': 0, '4': 0, '5': 0};
+
+            allRows.forEach(row => {
+                const roomNumberCell = row.querySelector('.room-number');
+                if (roomNumberCell) {
+                    const roomNumber = roomNumberCell.textContent;
+                    const floor = getFloorFromRoomNumber(roomNumber);
+                    if (floor && floorCounts.hasOwnProperty(floor)) {
+                        floorCounts[floor]++;
+                        floorCounts['']++; // 总数
+                    }
+                }
+            });
+
+            // 更新楼层标签显示统计
+            document.querySelectorAll('.floor-tab').forEach(tab => {
+                const floor = tab.getAttribute('data-floor');
+                const count = floorCounts[floor] || 0;
+
+                // 移除现有的统计显示
+                const existingStats = tab.querySelector('.floor-stats');
+                if (existingStats) {
+                    existingStats.remove();
+                }
+
+                // 添加新的统计显示
+                if (count > 0) {
+                    const statsSpan = document.createElement('span');
+                    statsSpan.className = 'floor-stats';
+                    statsSpan.textContent = count;
+                    tab.appendChild(statsSpan);
+                }
+            });
+        }
+
+        // 刷新房间列表
+        function refreshRoomList() {
+            location.reload();
+        }
+
+        // 查看房间详情
+        function viewRoom(roomId) {
+            // 这里应该发送AJAX请求获取房间详情
+            fetch(`/api/rooms_new/${roomId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const statusMap = {
+                        1: {text: '空闲', class: 'badge bg-success'},
+                        2: {text: '已出租', class: 'badge bg-warning'},
+                        3: {text: '维修中', class: 'badge bg-info'},
+                        4: {text: '停用', class: 'badge bg-secondary'}
+                    };
+
+                    const statusInfo = statusMap[data.status] || {text: '未知', class: 'badge bg-secondary'};
+
+                    document.getElementById('viewRoomContent').innerHTML = `
+                <div class="room-detail-container">
+                    <!-- 房间头部信息 -->
+                    <div class="room-header-card">
+                    <div class="room-icon">
+                    <i class="fas fa-home"></i>
+                    </div>
+                    <div class="room-title">
+                    <h3 class="room-number">${data.room_number}</h3>
+                    <span class="room-type-badge">${data.room_type}</span>
+                    </div>
+                    <div class="room-status">
+                    <span class="${statusInfo.class}">${statusInfo.text}</span>
+                    </div>
+                    </div>
+
+                        <!-- 基本信息卡片 -->
+                    <div class="detail-card">
+                    <div class="card-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h5>基本信息</h5>
+                    </div>
+                    <div class="card-content">
+                    <div class="detail-grid">
+                    <div class="detail-item">
+                    <span class="label">房号</span>
+                    <span class="value highlight">${data.room_number}</span>
+                    </div>
+                    <div class="detail-item">
+                    <span class="label">房型</span>
+                    <span class="value">${data.room_type}</span>
+                    </div>
+                    <div class="detail-item">
+                    <span class="label">基础租金</span>
+                    <span class="value price">¥${data.base_rent}</span>
+                    </div>
+                    <div class="detail-item">
+                    <span class="label">状态</span>
+                    <span class="value">${statusInfo.text}</span>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+
+                        <!-- 设备信息卡片 -->
+                    <div class="detail-card">
+                    <div class="card-header">
+                    <i class="fas fa-tools"></i>
+                    <h5>设备信息</h5>
+                    </div>
+                    <div class="card-content">
+                    <div class="detail-grid">
+                    <div class="detail-item">
+                    <span class="label"><i class="fas fa-tint"></i> 水表编号</span>
+                    <span class="value">${data.water_meter_number || '未设置'}</span>
+                    </div>
+                    <div class="detail-item">
+                    <span class="label"><i class="fas fa-bolt"></i> 电表编号</span>
+                    <span class="value">${data.electricity_meter_number || '未设置'}</span>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+
+                        <!-- 时间信息卡片 -->
+                    <div class="detail-card">
+                    <div class="card-header">
+                    <i class="fas fa-clock"></i>
+                    <h5>时间信息</h5>
+                    </div>
+                    <div class="card-content">
+                    <div class="detail-grid">
+                    <div class="detail-item">
+                    <span class="label"><i class="fas fa-calendar-plus"></i> 创建时间</span>
+                    <span class="value">${data.created_at || '未记录'}</span>
+                    </div>
+                    <div class="detail-item">
+                    <span class="label"><i class="fas fa-calendar-alt"></i> 更新时间</span>
+                    <span class="value">${data.updated_at || '未记录'}</span>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                    `
+                ;
+
+                                    new bootstrap.Modal(document.getElementById('viewRoomModal')).show();
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('获取房间详情失败');
+                                });
+                        }
+
+                        // 编辑房间
+                        function editRoom(roomId) {
+                            fetch(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    `/api/rooms_new/${roomId}`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                )
+                                                                                                                                                                                                                                                                                                                                                .then(response => response.json())
+                                                                                                                                                                                                                                                                                                                                                .then(data => {
+                                                                                                                                                                                                                                                                                                                                                    console.log('房间数据:', data); // 调试信息
+
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('editRoomId').value = roomId;
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('editRoomNumber').value = data.room_number || '';
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('editRoomType').value = data.room_type || '';
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('editBaseRent').value = data.base_rent || '';
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('editDeposit').value = data.deposit || '';
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('editWaterMeter').value = data.water_meter_number || '';
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('editElectricityMeter').value = data.electricity_meter_number || '';
+
+                                                                                                                                                                                                                                                                                                                                                    // 确保房间状态正确设置
+                                                                                                                                                                                                                                                                                                                                                    const statusSelect = document.getElementById('editRoomStatus');
+                                                                                                                                                                                                                                                                                                                                                    // API返回的字段名是 'status' 而不是 'room_status'
+                                                                                                                                                                                                                                                                                                                                                    const roomStatus = data.status || data.room_status;
+                                                                                                                                                                                                                                                                                                                                                    console.log('房间状态值:', roomStatus, '类型:', typeof roomStatus); // 调试信息
+                                                                                                                                                                                                                                                                                                                                                    console.log('完整数据:', data); // 调试信息
+
+                                                                                                                                                                                                                                                                                                                                                    // 清除所有选项的选中状态
+                                                                                                                                                                                                                                                                                                                                                    Array.from(statusSelect.options).forEach(option => {
+                                                                                                                                                                                                                                                                                                                                                        option.selected = false;
+                                                                                                                                                                                                                                                                                                                                                    });
+
+                                                                                                                                                                                                                                                                                                                                                    // 设置正确的选项为选中状态
+                                                                                                                                                                                                                                                                                                                                                    if (roomStatus !== undefined && roomStatus !== null) {
+                                                                                                                                                                                                                                                                                                                                                        // 转换为字符串进行比较
+                                                                                                                                                                                                                                                                                                                                                        const statusValue = String(roomStatus);
+                                                                                                                                                                                                                                                                                                                                                        const targetOption = Array.from(statusSelect.options).find(option => option.value === statusValue);
+                                                                                                                                                                                                                                                                                                                                                        if (targetOption) {
+                                                                                                                                                                                                                                                                                                                                                            targetOption.selected = true;
+                                                                                                                                                                                                                                                                                                                                                            console.log('设置房间状态为:', statusValue, '显示文本:', targetOption.textContent); // 调试信息
+                                                                                                                                                                                                                                                                                                                                                        } else {
+                                                                                                                                                                                                                                                                                                                                                            console.warn('未找到匹配的房间状态选项:', statusValue);
+                                                                                                                                                                                                                                                                                                                                                            // 如果没找到匹配的选项，尝试设置为第一个非空选项
+                                                                                                                                                                                                                                                                                                                                                            const firstOption = statusSelect.querySelector('option[value=""]');
+                                                                                                                                                                                                                                                                                                                                                            if (firstOption) {
+                                                                                                                                                                                                                                                                                                                                                                firstOption.selected = true;
+                                                                                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                                                                                    }
+
+                                                                                                                                                                                                                                                                                                                                                    new bootstrap.Modal(document.getElementById('editRoomModal')).show();
+                                                                                                                                                                                                                                                                                                                                                })
+                                                                                                                                                                                                                                                                                                                                                .catch(error => {
+                                                                                                                                                                                                                                                                                                                                                    console.error('Error:', error);
+                                                                                                                                                                                                                                                                                                                                                    alert('加载房间数据失败');
+                                                                                                                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                                                                                        // 删除房间
+                                                                                                                                                                                                                                                                                                                                        function deleteRoom(roomId) {
+                                                                                                                                                                                                                                                                                                                                            // 首先获取房间信息用于显示在确认模态框中
+                                                                                                                                                                                                                                                                                                                                            fetch(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    `/api/rooms_new/${roomId}`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                )
+                                                                                                                                                                                                                                                                                                                                                .then(response => response.json())
+                                                                                                                                                                                                                                                                                                                                                .then(data => {
+                                                                                                                                                                                                                                                                                                                                                    // 填充删除确认模态框的信息
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('deleteRoomNumber').textContent = data.room_number;
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('deleteRoomType').textContent = data.room_type;
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('deleteRoomRent').textContent =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    `¥${data.base_rent}`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                ;
+
+                                                                                                                                                                                                                                                                                                                                                    // 设置状态显示
+                                                                                                                                                                                                                                                                                                                                                    const statusMap = {
+                                                                                                                                                                                                                                                                                                                                                        1: '空闲',
+                                                                                                                                                                                                                                                                                                                                                        2: '已出租',
+                                                                                                                                                                                                                                                                                                                                                        3: '维修中',
+                                                                                                                                                                                                                                                                                                                                                        4: '停用'
+                                                                                                                                                                                                                                                                                                                                                    };
+                                                                                                                                                                                                                                                                                                                                                    document.getElementById('deleteRoomStatus').textContent = statusMap[data.room_status] || '未知';
+
+                                                                                                                                                                                                                                                                                                                                                    // 设置确认删除按钮的点击事件
+                                                                                                                                                                                                                                                                                                                                                    const confirmBtn = document.getElementById('confirmDeleteBtn');
+                                                                                                                                                                                                                                                                                                                                                    confirmBtn.onclick = function () {
+                                                                                                                                                                                                                                                                                                                                                        performDelete(roomId);
+                                                                                                                                                                                                                                                                                                                                                    };
+
+                                                                                                                                                                                                                                                                                                                                                    // 显示删除确认模态框
+                                                                                                                                                                                                                                                                                                                                                    new bootstrap.Modal(document.getElementById('deleteRoomModal')).show();
+                                                                                                                                                                                                                                                                                                                                                })
+                                                                                                                                                                                                                                                                                                                                                .catch(error => {
+                                                                                                                                                                                                                                                                                                                                                    console.error('Error:', error);
+                                                                                                                                                                                                                                                                                                                                                    alert('获取房间信息失败');
+                                                                                                                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                                                                                        // 执行删除操作
+                                                                                                                                                                                                                                                                                                                                        function performDelete(roomId) {
+                                                                                                                                                                                                                                                                                                                                            const confirmBtn = document.getElementById('confirmDeleteBtn');
+                                                                                                                                                                                                                                                                                                                                            const originalText = confirmBtn.innerHTML;
+
+                                                                                                                                                                                                                                                                                                                                            // 显示加载状态
+                                                                                                                                                                                                                                                                                                                                            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 删除中...';
+                                                                                                                                                                                                                                                                                                                                            confirmBtn.disabled = true;
+
+                                                                                                                                                                                                                                                                                                                                            fetch(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    `/api/rooms_new/${roomId}`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                , {
+                                                                                                                                                                                                                                                                                                                                                method: 'DELETE'
+                                                                                                                                                                                                                                                                                                                                            })
+                                                                                                                                                                                                                                                                                                                                                .then(response => response.json())
+                                                                                                                                                                                                                                                                                                                                                .then(data => {
+                                                                                                                                                                                                                                                                                                                                                    if (data.success) {
+                                                                                                                                                                                                                                                                                                                                                        // 关闭模态框
+                                                                                                                                                                                                                                                                                                                                                        bootstrap.Modal.getInstance(document.getElementById('deleteRoomModal')).hide();
+
+                                                                                                                                                                                                                                                                                                                                                        // 显示成功消息
+                                                                                                                                                                                                                                                                                                                                                        showSuccessMessage('房间删除成功！');
+
+                                                                                                                                                                                                                                                                                                                                                        // 延迟刷新页面以显示成功消息
+                                                                                                                                                                                                                                                                                                                                                        setTimeout(() => {
+                                                                                                                                                                                                                                                                                                                                                            location.reload();
+                                                                                                                                                                                                                                                                                                                                                        }, 1500);
+                                                                                                                                                                                                                                                                                                                                                    } else {
+                                                                                                                                                                                                                                                                                                                                                        alert('删除失败: ' + data.message);
+                                                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                                                })
+                                                                                                                                                                                                                                                                                                                                                .catch(error => {
+                                                                                                                                                                                                                                                                                                                                                    console.error('Error:', error);
+                                                                                                                                                                                                                                                                                                                                                    alert('删除失败，请稍后重试');
+                                                                                                                                                                                                                                                                                                                                                })
+                                                                                                                                                                                                                                                                                                                                                .finally(() => {
+                                                                                                                                                                                                                                                                                                                                                    // 恢复按钮状态
+                                                                                                                                                                                                                                                                                                                                                    confirmBtn.innerHTML = originalText;
+                                                                                                                                                                                                                                                                                                                                                    confirmBtn.disabled = false;
+                                                                                                                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                                                                                        // 显示成功消息的辅助函数
+                                                                                                                                                                                                                                                                                                                                        function showSuccessMessage(message) {
+                                                                                                                                                                                                                                                                                                                                            // 创建成功提示元素
+                                                                                                                                                                                                                                                                                                                                            const alertDiv = document.createElement('div');
+                                                                                                                                                                                                                                                                                                                                            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                                                                                                                                                                                                                                                                                                                                            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                                                                                                                                                                                                                                                                                                                                            alertDiv.innerHTML =
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    `
+                    <i class="fas fa-check-circle"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                ;
+
+                                                                                                                                                                                                                                                                                                                                            document.body.appendChild(alertDiv);
+
+                                                                                                                                                                                                                                                                                                                                            // 3秒后自动移除
+                                                                                                                                                                                                                                                                                                                                            setTimeout(() => {
+                                                                                                                                                                                                                                                                                                                                                if (alertDiv.parentNode) {
+                                                                                                                                                                                                                                                                                                                                                    alertDiv.parentNode.removeChild(alertDiv);
+                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                            }, 3000);
+                                                                                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                                                                                        // 添加房间表单提交
+                                                                                                                                                                                                                                                                                                                                        document.getElementById('addRoomForm').addEventListener('submit', function (e) {
+                                                                                                                                                                                                                                                                                                                                            e.preventDefault();
+
+                                                                                                                                                                                                                                                                                                                                            const formData = new FormData(this);
+                                                                                                                                                                                                                                                                                                                                            const roomData = Object.fromEntries(formData);
+
+                                                                                                                                                                                                                                                                                                                                            fetch('/api/rooms_new', {
+                                                                                                                                                                                                                                                                                                                                                method: 'POST',
+                                                                                                                                                                                                                                                                                                                                                headers: {
+                                                                                                                                                                                                                                                                                                                                                    'Content-Type': 'application/json',
+                                                                                                                                                                                                                                                                                                                                                },
+                                                                                                                                                                                                                                                                                                                                                body: JSON.stringify(roomData)
+                                                                                                                                                                                                                                                                                                                                            })
+                                                                                                                                                                                                                                                                                                                                                .then(response => response.json())
+                                                                                                                                                                                                                                                                                                                                                .then(data => {
+                                                                                                                                                                                                                                                                                                                                                    if (data.success) {
+                                                                                                                                                                                                                                                                                                                                                        alert('添加成功');
+                                                                                                                                                                                                                                                                                                                                                        bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
+                                                                                                                                                                                                                                                                                                                                                        location.reload();
+                                                                                                                                                                                                                                                                                                                                                    } else {
+                                                                                                                                                                                                                                                                                                                                                        alert('添加失败: ' + data.message);
+                                                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                                                })
+                                                                                                                                                                                                                                                                                                                                                .catch(error => {
+                                                                                                                                                                                                                                                                                                                                                    console.error('Error:', error);
+                                                                                                                                                                                                                                                                                                                                                    alert('添加失败');
+                                                                                                                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                                                                                                        });
+
+                                                                                                                                                                                                                                                                                                                                        // 编辑房间表单提交
+                                                                                                                                                                                                                                                                                                                                        document.getElementById('editRoomForm').addEventListener('submit', function (e) {
+                                                                                                                                                                                                                                                                                                                                            e.preventDefault();
+
+                                                                                                                                                                                                                                                                                                                                            const formData = new FormData(this);
+                                                                                                                                                                                                                                                                                                                                            const roomData = Object.fromEntries(formData);
+
+                                                                                                                                                                                                                                                                                                                                            fetch(
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    `/api/rooms_new/${roomData.room_id}`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                , {
+                                                                                                                                                                                                                                                                                                                                                method: 'PUT',
+                                                                                                                                                                                                                                                                                                                                                headers: {
+                                                                                                                                                                                                                                                                                                                                                    'Content-Type': 'application/json',
+                                                                                                                                                                                                                                                                                                                                                },
+                                                                                                                                                                                                                                                                                                                                                body: JSON.stringify(roomData)
+                                                                                                                                                                                                                                                                                                                                            })
+                                                                                                                                                                                                                                                                                                                                                .then(response => response.json())
+                                                                                                                                                                                                                                                                                                                                                .then(data => {
+                                                                                                                                                                                                                                                                                                                                                    if (data.success) {
+                                                                                                                                                                                                                                                                                                                                                        alert('编辑成功');
+                                                                                                                                                                                                                                                                                                                                                        bootstrap.Modal.getInstance(document.getElementById('editRoomModal')).hide();
+                                                                                                                                                                                                                                                                                                                                                        location.reload();
+                                                                                                                                                                                                                                                                                                                                                    } else {
+                                                                                                                                                                                                                                                                                                                                                        alert('编辑失败: ' + data.message);
+                                                                                                                                                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                                                                                                                                                })
+                                                                                                                                                                                                                                                                                                                                                .catch(error => {
+                                                                                                                                                                                                                                                                                                                                                    console.error('Error:', error);
+                                                                                                                                                                                                                                                                                                                                                    alert('编辑失败');
+                                                                                                                                                                                                                                                                                                                                                });
+                                                                                                                                                                                                                                                                                                                                        });
+
+                                                                                                                                                                                                                                                                                                                                        // 更新行号
+                                                                                                                                                                                                                                                                                                                                        function updateRowNumbers() {
+                                                                                                                                                                                                                                                                                                                                            const visibleRows = document.querySelectorAll('#roomsTable tbody tr[data-room-id]');
+                                                                                                                                                                                                                                                                                                                                            let index = 1;
+                                                                                                                                                                                                                                                                                                                                            visibleRows.forEach(row => {
+                                                                                                                                                                                                                                                                                                                                                if (row.style.display !== 'none') {
+                                                                                                                                                                                                                                                                                                                                                    row.querySelector('td:first-child').textContent = index;
+                                                                                                                                                                                                                                                                                                                                                    index++;
+                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                            });
+                                                                                                                                                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                                                                                                                                                        // 页面加载完成后初始化
+                                                                                                                                                                                                                                                                                                                                        document.addEventListener('DOMContentLoaded', function() {
+                                                                                                                                                                                                                                                                                                                                            // 初始化楼层统计
+                                                                                                                                                                                                                                                                                                                                            updateFloorStats();
+
+                                                                                                                                                                                                                                                                                                                                            // 绑定下拉选择框变化事件
+                                                                                                                                                                                                                                                                                                                                            document.getElementById('filterFloor').addEventListener('change', function() {
+                                                                                                                                                                                                                                                                                                                                                const selectedFloor = this.value;
+                                                                                                                                                                                                                                                                                                                                                filterByFloor(selectedFloor);
+                                                                                                                                                                                                                                                                                                                                            });
+
+                                                                                                                                                                                                                                                                                                                                            // 绑定状态筛选变化事件
+                                                                                                                                                                                                                                                                                                                                            document.getElementById('filterStatus').addEventListener('change', function() {
+                                                                                                                                                                                                                                                                                                                                                filterRooms();
+                                                                                                                                                                                                                                                                                                                                            });
+
+                                                                                                                                                                                                                                                                                                                                                        // 绑定空闲房间卡片点击事件
+                            document.getElementById('availableRoomsCard').addEventListener('click', function() {
+                                // 重置所有筛选条件
+                                document.getElementById('searchRoom').value = '';
+                                document.getElementById('filterFloor').value = '';
+                                document.getElementById('filterStatus').value = '1';
+
+                                // 执行筛选
+                                filterRooms();
+
+                                // 显示提示信息
+                                showNotification('已筛选显示所有空闲房间', 'success');
+                            });
+
+                            // 绑定已出租房间卡片点击事件
+                            document.getElementById('occupiedRoomsCard').addEventListener('click', function() {
+                                // 重置所有筛选条件
+                                document.getElementById('searchRoom').value = '';
+                                document.getElementById('filterFloor').value = '';
+                                document.getElementById('filterStatus').value = '2';
+
+                                // 执行筛选
+                                filterRooms();
+
+                                // 显示提示信息
+                                showNotification('已筛选显示所有已出租房间', 'success');
+                            });
+                                                                                                                                                                                                                                                                                                                                        });
+
+                                                                                                                                                                                                                                                                                                                                        // 表格行悬停效果
+                                                                                                                                                                                                                                                                                                                                        document.querySelectorAll('#roomsTable tbody tr[data-room-id]').forEach(row => {
+                                                                                                                                                                                                                                                                                                                                            row.addEventListener('mouseenter', function () {
+                                                                                                                                                                                                                                                                                                                                                this.style.backgroundColor = '#f8f9fa';
+                                                                                                                                                                                                                                                                                                                                            });
+
+                                                                                                                                                                                                                                                                                                                                            row.addEventListener('mouseleave', function () {
+                                                                                                                                                                                                                                                                                                                                                this.style.backgroundColor = '';
+                                                                                                                                                                                                                                                                                                                                            });
+                                                                                                                                                                                                                                                                                                                                        });
+
+                        // 显示通知函数
+                        function showNotification(message, type = 'info') {
+                            // 创建通知元素
+                            const notification = document.createElement('div');
+                            notification.className =
+                    `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show`
+                ;
+                            notification.style.cssText =
+                    `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    min-width: 300px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    `
+                ;
+
+                            const iconClass = type === 'error' ? 'fa-times-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+
+                            notification.innerHTML =
+                    `
+                    <i class="fas ${iconClass} me-2"></i>
+                        ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `
+                ;
+
+                            document.body.appendChild(notification);
+
+                            // 自动移除通知
+                            setTimeout(() => {
+                                if (document.body.contains(notification)) {
+                                    notification.remove();
+                                }
+                            }, 5000);
+                        }
+</script>
+
+    <style>
+        /* 查看详情模态框美化样式 */
+        .room-detail-container {
+            padding: 10px;
+        }
+
+        .room-header-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room-header-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .room-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .room-title {
+            flex: 1;
+        }
+
+        .room-number {
+            margin: 0 0 5px 0;
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .room-type-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .room-status {
+            align-self: flex-start;
+        }
+
+        .detail-card {
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .detail-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .detail-card .card-header {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-card .card-header h5 {
+            margin: 0;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .detail-card .card-header i {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .card-content {
+            padding: 25px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .detail-item .label {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .detail-item .label i {
+            color: #667eea;
+            font-size: 0.8rem;
+        }
+
+        .detail-item .value {
+            font-size: 1.1rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .detail-item .value.highlight {
+            color: #667eea;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .detail-item .value.price {
+            color: #48bb78;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-weight: 700;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .room-header-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 25px 20px;
+            }
+
+            .room-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .room-number {
+                font-size: 1.5rem;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .detail-card .card-header {
+                padding: 15px 20px;
+            }
+
+            .card-content {
+                padding: 20px;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .room-detail-container > * {
+            animation: fadeInUp 0.5s ease-out both;
+        }
+
+        .room-detail-container > *:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .room-detail-container > *:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .room-detail-container > *:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        /* 模态框增强样式 */
+        #viewRoomModal .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        #viewRoomModal .modal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            border: none;
+            padding: 25px 30px;
+        }
+
+        #viewRoomModal .modal-title {
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+
+        #viewRoomModal .modal-body {
+            padding: 0;
+            background: #f8fafc;
+        }
+
+        #viewRoomModal .modal-footer {
+            border: none;
+            padding: 20px 30px 30px;
+            background: #f8fafc;
+            border-radius: 0 0 20px 20px;
+        }
+
+        /* 添加房间模态框美化样式 */
+        .add-room-modal {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .add-room-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 25px 30px;
+            position: relative;
+        }
+
+        .add-room-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>');
+            pointer-events: none;
+        }
+
+        .add-room-header .modal-title {
+            font-weight: 600;
+            font-size: 1.4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .add-room-header .btn-close {
+            position: relative;
+            z-index: 1;
+        }
+
+        #addRoomModal .modal-body {
+            padding: 30px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        #addRoomModal .form-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #addRoomModal .form-control,
+        #addRoomModal .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #addRoomModal .form-control:focus,
+        #addRoomModal .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        #addRoomModal .mb-3 {
+            position: relative;
+        }
+
+        #addRoomModal .mb-3::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -15px;
+            right: -15px;
+            bottom: 0;
+            background: white;
+            border-radius: 15px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        #addRoomModal .mb-3:hover::before {
+            opacity: 1;
+        }
+
+        #addRoomModal .modal-footer {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: none;
+            padding: 20px 30px 30px;
+            gap: 15px;
+        }
+
+        #addRoomModal .btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #addRoomModal .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        #addRoomModal .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        #addRoomModal .btn-secondary {
+            background: linear-gradient(135deg, #718096, #4a5568);
+            color: white;
+            box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
+        }
+
+        #addRoomModal .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(113, 128, 150, 0.4);
+        }
+
+        #addRoomModal .text-danger {
+            color: #e53e3e !important;
+            font-weight: 700;
+        }
+
+        /* 表单动画效果 */
+        #addRoomModal .row {
+            animation: slideInUp 0.6s ease-out both;
+        }
+
+        #addRoomModal .row:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        #addRoomModal .row:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        #addRoomModal .row:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+{% endblock %}

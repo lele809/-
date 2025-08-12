@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>租房管理系统 - 楼层选择</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+<div class="dashboard-container">
+    <div class="dashboard-card">
+        <h1 class="system-title">
+            <i class="fas fa-home"></i>
+            租房管理系统
+        </h1>
+        <p class="system-subtitle">请选择要管理的楼层</p>
+
+        <div class="d-flex justify-content-center flex-wrap">
+            <a href="{{ url_for('index5') }}" class="btn floor-btn floor-5">
+                <i class="fas fa-building"></i>
+                <span>五楼管理</span>
+            </a>
+
+            <a href="{{ url_for('index6') }}" class="btn floor-btn floor-6">
+                <i class="fas fa-building"></i>
+                <span>六楼管理</span>
+            </a>
+        </div>
+
+        <div class="d-flex justify-content-center mt-3">
+            <a href="{{ url_for('login') }}" class="btn back-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span>返回登录</span>
+            </a>
+        </div>
+
+        <p class="footer-text">
+            <i class="fas fa-info-circle"></i>
+            点击对应楼层按钮进入管理界面
+        </p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

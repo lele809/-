@@ -1,0 +1,1972 @@
+{% extends "base_new.html" %}
+
+{% block title %}六楼管理 - 联系人列表 - 租房管理系统{% endblock %}
+
+{% block page_title %}六楼管理 - 联系人列表{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index6') }}"><i class="fas fa-home"></i> 主页</a></li>
+                <li class="breadcrumb-item active">联系人列表</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/contacts.css') }}">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <!-- 页面标题 -->
+        <div class="contacts-header">
+            <div class="header-background"></div>
+            <div class="header-pattern"></div>
+            <div class="row align-items-center position-relative">
+                <div class="col-md-8">
+                    <div class="header-content">
+                        <div class="header-icon">
+                            <i class="fas fa-address-book"></i>
+                        </div>
+                        <div class="header-text">
+                            <h2 class="header-title">联系人管理中心</h2>
+                            <p class="header-subtitle mb-0">
+                                <i class="fas fa-users me-2"></i>管理六楼所有租客的联系信息，快速查找和联系租户
+                            </p>
+                            <div class="header-badges mt-2">
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-shield-alt me-1"></i>安全管理
+                            </span>
+                                <span class="badge bg-light text-dark">
+                                <i class="fas fa-clock me-1"></i>实时更新
+                            </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="header-actions">
+                        <button class="btn btn-glass btn-sm me-2" onclick="exportContacts()" title="导出联系人">
+                            <i class="fas fa-download me-1"></i> 导出数据
+                        </button>
+                        <button class="btn btn-glass btn-sm me-2" onclick="importContacts()" title="导入联系人">
+                            <i class="fas fa-upload me-1"></i> 导入
+                        </button>
+                        <button class="btn btn-glass btn-sm" onclick="refreshContacts()" title="刷新数据">
+                            <i class="fas fa-sync-alt me-1"></i> 刷新
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息卡片 -->
+        <div class="stats-section">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stats-card stats-primary" data-aos="fade-up" data-aos-delay="100">
+                        <div class="stats-background"></div>
+                        <div class="stats-icon">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number"
+                                 data-count="{{ pagination.total if pagination else contacts_list|length }}">0
+                            </div>
+                            <div class="stats-label">总联系人数</div>
+                            <div class="stats-trend">
+                                <i class="fas fa-arrow-up text-success"></i>
+                                <span class="text-success">+12%</span>
+                            </div>
+                        </div>
+                        <div class="stats-decoration">
+                            <div class="decoration-circle"></div>
+                            <div class="decoration-circle"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stats-card stats-success" data-aos="fade-up" data-aos-delay="200">
+                        <div class="stats-background"></div>
+                        <div class="stats-icon">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-count="{{ contacts_list|selectattr('phone')|list|length }}">
+                                0
+                            </div>
+                            <div class="stats-label">有效电话</div>
+                            <div class="stats-trend">
+                                <i class="fas fa-arrow-up text-success"></i>
+                                <span class="text-success">+8%</span>
+                            </div>
+                        </div>
+                        <div class="stats-decoration">
+                            <div class="decoration-circle"></div>
+                            <div class="decoration-circle"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stats-card stats-warning" data-aos="fade-up" data-aos-delay="300">
+                        <div class="stats-background"></div>
+                        <div class="stats-icon">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-home"></i>
+                            </div>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number"
+                                 data-count="{{ contacts_list|map(attribute='roomId')|unique|list|length }}">0
+                            </div>
+                            <div class="stats-label">已入住房间</div>
+                            <div class="stats-trend">
+                                <i class="fas fa-arrow-up text-success"></i>
+                                <span class="text-success">+5%</span>
+                            </div>
+                        </div>
+                        <div class="stats-decoration">
+                            <div class="decoration-circle"></div>
+                            <div class="decoration-circle"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stats-card stats-info" data-aos="fade-up" data-aos-delay="400">
+                        <div class="stats-background"></div>
+                        <div class="stats-icon">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="stats-content">
+                            <div class="stats-number" data-count="3">0</div>
+                            <div class="stats-label">本周新增</div>
+                            <div class="stats-trend">
+                                <i class="fas fa-arrow-up text-success"></i>
+                                <span class="text-success">+25%</span>
+                            </div>
+                        </div>
+                        <div class="stats-decoration">
+                            <div class="decoration-circle"></div>
+                            <div class="decoration-circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索和操作区域 -->
+        <div class="search-section" data-aos="fade-up" data-aos-delay="500">
+            <div class="search-background"></div>
+            <div class="row align-items-center">
+                <div class="col-lg-6 col-md-12 mb-3 mb-lg-0">
+                    <div class="search-container">
+                        <div class="search-wrapper">
+                            <div class="search-icon">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <input type="text" class="form-control search-input"
+                                   placeholder="🔍 搜索联系人姓名、房间号、电话或身份证..."
+                                   id="searchInput">
+                            <button class="btn search-clear-btn" type="button" onclick="clearSearch()" title="清空搜索">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3 mb-lg-0">
+                    <div class="filter-container">
+                        <div class="filter-wrapper">
+                            <i class="fas fa-filter filter-icon"></i>
+                            <select class="form-select custom-select" id="roomFilter" onchange="filterByRoom()">
+                                <option value="">🏠 所有房间</option>
+                                {% for room in contacts_list|map(attribute='roomId')|unique|sort %}
+                                    <option value="{{ room }}">房间 {{ room }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="action-buttons">
+                        <button class="btn btn-gradient-primary add-contact-btn w-100" onclick="addContact()">
+                        <span class="btn-content">
+                            <i class="fas fa-user-plus me-2"></i>
+                            <span>添加联系人</span>
+                        </span>
+                            <div class="btn-shine"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快速筛选标签 -->
+            <div class="quick-filters mt-3">
+                <div class="filter-tags">
+                <span class="filter-tag active" onclick="quickFilter('all')">
+                    <i class="fas fa-users me-1"></i>全部
+                </span>
+                    <span class="filter-tag" onclick="quickFilter('recent')">
+                    <i class="fas fa-clock me-1"></i>最近添加
+                </span>
+                    <span class="filter-tag" onclick="quickFilter('phone')">
+                    <i class="fas fa-phone me-1"></i>有电话
+                </span>
+                    <span class="filter-tag" onclick="quickFilter('no-phone')">
+                    <i class="fas fa-phone-slash me-1"></i>无电话
+                </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 联系人列表 -->
+        <div class="contacts-table" data-aos="fade-up" data-aos-delay="600">
+            <div class="table-header">
+                <div class="table-header-background"></div>
+                <div class="row align-items-center position-relative">
+                    <div class="col-md-6">
+                        <div class="table-title-section">
+                            <div class="title-icon">
+                                <i class="fas fa-address-card"></i>
+                            </div>
+                            <div class="title-content">
+                                <h5 class="table-title mb-0">联系人详细列表</h5>
+                                <div class="table-subtitle">
+                                    <span class="contact-count-badge"
+                                          id="contactCount">{{ contacts_list|length }}</span>
+                                    <span class="count-text">位租户信息</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="table-actions">
+                            <div class="action-group">
+                                <button class="btn btn-glass-secondary btn-sm me-2" onclick="selectAll()" title="全选">
+                                    <i class="fas fa-check-square me-1"></i>
+                                    <span>全选</span>
+                                </button>
+                                <button class="btn btn-glass-danger btn-sm" onclick="batchDelete()" title="批量删除"
+                                        disabled id="batchDeleteBtn">
+                                    <i class="fas fa-trash me-1"></i>
+                                    <span>批量删除</span>
+                                </button>
+                            </div>
+                            <div class="view-options ms-3">
+                                <button class="btn btn-view-option" onclick="switchView('table')"
+                                        title="表格视图">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                                <button class="btn btn-view-option active" onclick="switchView('card')"
+                                        title="卡片视图">
+                                    <i class="fas fa-th-large"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if contacts_list %}
+                <!-- 表格视图 -->
+                <div class="table-view" id="tableView" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-hover modern-table">
+                            <thead>
+                            <tr>
+                                <th width="5%" class="checkbox-column">
+                                    <div class="custom-checkbox">
+                                        <input type="checkbox" class="form-check-input" id="selectAllCheckbox"
+                                               onchange="toggleSelectAll()">
+                                        <label for="selectAllCheckbox" class="checkbox-label"></label>
+                                    </div>
+                                </th>
+                                <th width="8%" class="sortable" onclick="sortTable('index')">
+                                    <div class="th-content">
+                                        <span>序号</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th width="12%" class="sortable" onclick="sortTable('room')">
+                                    <div class="th-content">
+                                        <i class="fas fa-home me-1"></i>
+                                        <span>房间号</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th width="15%" class="sortable" onclick="sortTable('name')">
+                                    <div class="th-content">
+                                        <i class="fas fa-user me-1"></i>
+                                        <span>姓名</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th width="15%" class="sortable" onclick="sortTable('phone')">
+                                    <div class="th-content">
+                                        <i class="fas fa-phone me-1"></i>
+                                        <span>电话</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th width="20%">
+                                    <div class="th-content">
+                                        <i class="fas fa-id-card me-1"></i>
+                                        <span>身份证号</span>
+                                    </div>
+                                </th>
+                                <th width="12%" class="sortable" onclick="sortTable('date')">
+                                    <div class="th-content">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        <span>创建时间</span>
+                                        <i class="fas fa-sort sort-icon"></i>
+                                    </div>
+                                </th>
+                                <th width="13%">
+                                    <div class="th-content">
+                                        <i class="fas fa-cogs me-1"></i>
+                                        <span>操作</span>
+                                    </div>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody id="contactsTableBody" class="table-body">
+                            {% for contact in contacts_list %}
+                                <tr class="contact-row modern-row"
+                                    data-search="
+
+
+                                            {{ contact.name }}{{ contact.roomId }}{{ contact.phone }}{{ contact.id_card }}"
+                                    data-room="{{ contact.roomId }}"
+                                    data-aos="fade-up"
+                                    data-aos-delay="{{ 100 + (loop.index * 50) }}">
+                                    <td class="checkbox-cell">
+                                        <div class="custom-checkbox">
+                                            <input type="checkbox" class="form-check-input contact-checkbox"
+                                                   id="contact-{{ contact.id }}"
+                                                   value="{{ contact.id }}"
+                                                   onchange="updateBatchActions()">
+                                            <label for="contact-{{ contact.id }}" class="checkbox-label"></label>
+                                        </div>
+                                    </td>
+                                    <td class="row-number-cell">
+                                        <div class="row-number-badge">{{ loop.index }}</div>
+                                    </td>
+                                    <td class="room-cell">
+                                        <div class="room-info">
+                                        <span class="room-badge-modern">
+                                            <i class="fas fa-home"></i>
+                                            <span class="room-number">{{ contact.roomId }}</span>
+                                        </span>
+                                        </div>
+                                    </td>
+                                    <td class="name-cell">
+                                        <div class="contact-profile">
+                                            <div class="profile-avatar">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="profile-info">
+                                                <div class="contact-name-modern">{{ contact.name }}</div>
+                                                <div class="contact-role">租户</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="phone-cell">
+                                        <div class="phone-container">
+                                            <div class="phone-info">
+                                                <i class="fas fa-phone phone-icon"></i>
+                                                <span class="phone-number">{{ contact.phone }}</span>
+                                            </div>
+                                            <div class="phone-actions">
+                                                <button class="btn-copy"
+                                                        onclick="copyToClipboard('{{ contact.phone }}')"
+                                                        title="复制电话">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                                <button class="btn-call" onclick="callContact('{{ contact.phone }}')"
+                                                        title="拨打电话">
+                                                    <i class="fas fa-phone-alt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="id-cell">
+                                        <div class="id-container">
+                                            <div class="id-info">
+                                                <i class="fas fa-id-card id-icon"></i>
+                                                <span class="id-number">{{ contact.id_card[:6] }}****{{ contact.id_card[-4:] if contact.id_card|length > 10 else contact.id_card }}</span>
+                                            </div>
+                                            <button class="btn-copy" onclick="copyToClipboard('{{ contact.id_card }}')"
+                                                    title="复制身份证">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td class="date-cell">
+                                        <div class="date-info">
+                                            <i class="fas fa-calendar-alt date-icon"></i>
+                                            <div class="date-content">
+                                                <div class="date-main">{{ contact.created_at.strftime('%m-%d') if contact.created_at else '--' }}</div>
+                                                <div class="date-year">{{ contact.created_at.strftime('%Y') if contact.created_at else '未知' }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="actions-cell">
+                                        <div class="action-buttons-modern">
+                                            <button class="btn-action-modern btn-view"
+                                                    onclick="viewContact({{ contact.id }})"
+                                                    title="查看详情">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-action-modern btn-edit"
+                                                    onclick="editContact({{ contact.id }})"
+                                                    title="编辑">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-action-modern btn-delete"
+                                                    onclick="deleteContact({{ contact.id }}, '{{ contact.name }}')"
+                                                    title="删除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 卡片视图 -->
+                <div class="card-view" id="cardView">
+                    <div class="contacts-grid">
+                        {% for contact in contacts_list %}
+                            <div class="contact-card"
+                                 data-search="
+                                         {{ contact.name }}{{ contact.roomId }}{{ contact.phone }}{{ contact.id_card }}"
+                                 data-room="{{ contact.roomId }}"
+                                 data-aos="zoom-in"
+                                 data-aos-delay="{{ 100 + (loop.index * 30) }}">
+                                <div class="card-header">
+                                    <div class="card-checkbox">
+                                        <input type="checkbox" class="form-check-input contact-checkbox"
+                                               value="{{ contact.id }}"
+                                               onchange="updateBatchActions()">
+                                    </div>
+                                    <div class="card-room">
+                                        <span class="room-badge-card">{{ contact.roomId }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="contact-avatar-large">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <h6 class="contact-name-card">{{ contact.name }}</h6>
+                                    <p class="contact-role-card">租户</p>
+
+                                    <div class="contact-details">
+                                        <div class="detail-item">
+                                            <i class="fas fa-phone"></i>
+                                            <span>{{ contact.phone }}</span>
+                                            <button class="btn-copy-small"
+                                                    onclick="copyToClipboard('{{ contact.phone }}')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="fas fa-id-card"></i>
+                                            <span>{{ contact.id_card[:6] }}****{{ contact.id_card[-4:] if contact.id_card|length > 10 else contact.id_card }}</span>
+                                            <button class="btn-copy-small"
+                                                    onclick="copyToClipboard('{{ contact.id_card }}')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="detail-item">
+                                            <i class="fas fa-calendar"></i>
+                                            <span>{{ contact.created_at.strftime('%Y-%m-%d') if contact.created_at else '未知' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-footer">
+                                    <div class="card-actions">
+                                        <button class="btn-card-action btn-primary"
+                                                onclick="viewContact({{ contact.id }})" title="查看">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-card-action btn-warning"
+                                                onclick="editContact({{ contact.id }})" title="编辑">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-card-action btn-success"
+                                                onclick="callContact('{{ contact.phone }}')" title="拨打">
+                                            <i class="fas fa-phone"></i>
+                                        </button>
+                                        <button class="btn-card-action btn-danger"
+                                                onclick="deleteContact({{ contact.id }}, '{{ contact.name }}')"
+                                                title="删除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-address-book"></i>
+                    </div>
+                    <h4>暂无联系人数据</h4>
+                    <p class="text-muted mb-4">还没有添加任何联系人信息，点击下方按钮开始添加第一个联系人</p>
+                    <div class="empty-actions">
+                        <button class="btn btn-primary add-contact-btn me-2" onclick="addContact()">
+                            <i class="fas fa-user-plus me-2"></i> 添加第一个联系人
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="importContacts()">
+                            <i class="fas fa-upload me-2"></i> 批量导入
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- 分页导航 - 始终显示，居中对齐 -->
+            <div class="pagination-section" data-aos="fade-up" data-aos-delay="700">
+                <div class="pagination-background"></div>
+                <div class="row justify-content-center position-relative">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-center align-items-center flex-column">
+                            <!-- 分页信息 -->
+                            <div class="pagination-info mb-3">
+                                <div class="info-content text-center">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <span class="pagination-text">
+                                        {% if pagination %}
+                                            共 {{ pagination.total }} 条联系人记录，当前第 {{ pagination.page }} 页，共
+                                            {{ pagination.pages }} 页
+                                        {% elif contacts_list %}
+                                            共 {{ contacts_list|length }} 条联系人记录
+                                        {% else %}
+                                            暂无联系人记录
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- 分页导航 -->
+                            {% if pagination and pagination.pages > 1 %}
+                                <nav aria-label="联系人分页导航" class="d-flex justify-content-center">
+                                    <ul class="pagination pagination-modern mb-0">
+                                        <!-- 首页 -->
+                                        <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+                                            {% if pagination.has_prev %}
+                                                <a class="page-link page-link-modern"
+                                                   href="{{ url_for('contacts_new', page=1) }}">
+                                                    <i class="fas fa-angle-double-left"></i>
+                                                </a>
+                                            {% else %}
+                                                <span class="page-link page-link-modern">
+                                                <i class="fas fa-angle-double-left"></i>
+                                            </span>
+                                            {% endif %}
+                                        </li>
+                                        <!-- 上一页 -->
+                                        <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+                                            {% if pagination.has_prev %}
+                                                <a class="page-link page-link-modern"
+                                                   href="{{ url_for('contacts_new', page=pagination.prev_num) }}">
+                                                    <i class="fas fa-angle-left"></i>
+                                                </a>
+                                            {% else %}
+                                                <span class="page-link page-link-modern">
+                                                <i class="fas fa-angle-left"></i>
+                                            </span>
+                                            {% endif %}
+                                        </li>
+
+                                        <!-- 页码 -->
+                                        {% for page_num in pagination.iter_pages() %}
+                                            {% if page_num %}
+                                                {% if page_num != pagination.page %}
+                                                    <li class="page-item">
+                                                        <a class="page-link page-link-modern"
+                                                           href="{{ url_for('contacts_new', page=page_num) }}">{{ page_num }}</a>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item active">
+                                                        <span class="page-link page-link-modern page-link-active">{{ page_num }}</span>
+                                                    </li>
+                                                {% endif %}
+                                            {% else %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link page-link-modern">…</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        <!-- 下一页 -->
+                                        <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+                                            {% if pagination.has_next %}
+                                                <a class="page-link page-link-modern"
+                                                   href="{{ url_for('contacts_new', page=pagination.next_num) }}">
+                                                    <i class="fas fa-angle-right"></i>
+                                                </a>
+                                            {% else %}
+                                                <span class="page-link page-link-modern">
+                                                <i class="fas fa-angle-right"></i>
+                                            </span>
+                                            {% endif %}
+                                        </li>
+                                        <!-- 末页 -->
+                                        <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+                                            {% if pagination.has_next %}
+                                                <a class="page-link page-link-modern"
+                                                   href="{{ url_for('contacts_new', page=pagination.pages) }}">
+                                                    <i class="fas fa-angle-double-right"></i>
+                                                </a>
+                                            {% else %}
+                                                <span class="page-link page-link-modern">
+                                                <i class="fas fa-angle-double-right"></i>
+                                            </span>
+                                            {% endif %}
+                                        </li>
+                                    </ul>
+                                </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加联系人模态框 -->
+    <div class="modal fade" id="addContactModal" tabindex="-1" aria-labelledby="addContactModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addContactModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>添加新联系人
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addContactForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="addName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>姓名 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="addName" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="addRoomId" class="form-label">
+                                        <i class="fas fa-home me-1"></i>房间号 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="addRoomId" name="roomId" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="addPhone" class="form-label">
+                                        <i class="fas fa-phone me-1"></i>电话号码 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="tel" class="form-control" id="addPhone" name="phone" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="addIdCard" class="form-label">
+                                        <i class="fas fa-id-card me-1"></i>身份证号 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="addIdCard" name="id_card" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="submitAddContact()">
+                        <i class="fas fa-save me-1"></i>保存联系人
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看联系人详情模态框 -->
+    <div class="modal fade" id="viewContactModal" tabindex="-1" aria-labelledby="viewContactModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewContactModalLabel">
+                        <i class="fas fa-eye me-2"></i>联系人详情
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="contact-details-view">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label><i class="fas fa-user me-2"></i>姓名</label>
+                                    <div class="detail-value" id="viewName">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label><i class="fas fa-home me-2"></i>房间号</label>
+                                    <div class="detail-value" id="viewRoomId">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label><i class="fas fa-phone me-2"></i>电话号码</label>
+                                    <div class="detail-value" id="viewPhone">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label><i class="fas fa-id-card me-2"></i>身份证号</label>
+                                    <div class="detail-value" id="viewIdCard">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="detail-item">
+                                    <label><i class="fas fa-calendar me-2"></i>创建时间</label>
+                                    <div class="detail-value" id="viewCreatedAt">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>关闭
+                    </button>
+                    <button type="button" class="btn btn-warning" onclick="editContactFromView()">
+                        <i class="fas fa-edit me-1"></i>编辑
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑联系人模态框 -->
+    <div class="modal fade" id="editContactModal" tabindex="-1" aria-labelledby="editContactModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editContactModalLabel">
+                        <i class="fas fa-edit me-2"></i>编辑联系人
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editContactForm">
+                        <input type="hidden" id="editContactId" name="id">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>姓名 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="editName" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editRoomId" class="form-label">
+                                        <i class="fas fa-home me-1"></i>房间号 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="editRoomId" name="roomId" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editPhone" class="form-label">
+                                        <i class="fas fa-phone me-1"></i>电话号码 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="tel" class="form-control" id="editPhone" name="phone" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editIdCard" class="form-label">
+                                        <i class="fas fa-id-card me-1"></i>身份证号 <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="editIdCard" name="id_card" required>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="submitEditContact()">
+                        <i class="fas fa-save me-1"></i>保存修改
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除联系人确认模态框 -->
+    <div class="modal fade" id="deleteContactModal" tabindex="-1" aria-labelledby="deleteContactModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteContactModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>确认删除
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="delete-warning">
+                        <div class="warning-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <div class="warning-content">
+                            <h6 class="warning-title">您确定要删除这个联系人吗？</h6>
+                            <p class="warning-message">
+                                您即将删除联系人 <strong id="deleteContactName" class="text-danger"></strong>，
+                                此操作将永久删除该联系人的所有信息，且无法恢复。
+                            </p>
+                            <div class="contact-info-preview">
+                                <div class="info-item">
+                                    <i class="fas fa-user me-2"></i>
+                                    <span>姓名：</span>
+                                    <span id="deletePreviewName" class="fw-bold"></span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-home me-2"></i>
+                                    <span>房间：</span>
+                                    <span id="deletePreviewRoom" class="fw-bold"></span>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-phone me-2"></i>
+                                    <span>电话：</span>
+                                    <span id="deletePreviewPhone" class="fw-bold"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn"
+                            onclick="showFinalConfirmation()">
+                        <i class="fas fa-trash me-1"></i>确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最终确认删除对话框 -->
+    <div class="modal fade" id="finalConfirmModal" tabindex="-1" aria-labelledby="finalConfirmModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="finalConfirmModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>确认删除
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="final-confirm-content">
+                        <div class="confirm-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <h6 class="confirm-title">您确定要删除这个联系人吗？</h6>
+                        <p class="confirm-message">
+                            您即将删除联系人 <strong id="finalContactName" class="text-danger"></strong>，
+                            此操作作将永久删除该联系人的所有信息，且无法恢复。
+                        </p>
+                        <div class="contact-summary">
+                            <div class="summary-item">
+                                <i class="fas fa-user me-2"></i>
+                                <span>姓名：</span>
+                                <span id="finalPreviewName" class="fw-bold"></span>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-home me-2"></i>
+                                <span>房间：</span>
+                                <span id="finalPreviewRoom" class="fw-bold"></span>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-phone me-2"></i>
+                                <span>电话：</span>
+                                <span id="finalPreviewPhone" class="fw-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-danger" id="finalConfirmBtn" onclick="confirmDeleteContact()">
+                        <i class="fas fa-trash me-1"></i>确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量删除确认模态框 -->
+    <div class="modal fade" id="batchDeleteModal" tabindex="-1" aria-labelledby="batchDeleteModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="batchDeleteModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>批量删除确认
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="batch-delete-warning">
+                        <div class="warning-icon">
+                            <i class="fas fa-users-slash"></i>
+                        </div>
+                        <div class="warning-content">
+                            <h6 class="warning-title">您确定要批量删除选中的联系人吗？</h6>
+                            <p class="warning-message">
+                                您即将删除 <strong id="batchDeleteCount" class="text-danger"></strong> 个联系人，
+                                此操作将永久删除这些联系人的所有信息，且无法恢复。
+                            </p>
+                            <div class="selected-contacts-preview">
+                                <h6 class="preview-title">
+                                    <i class="fas fa-list me-2"></i>即将删除的联系人：
+                                </h6>
+                                <div id="batchDeleteList" class="contacts-list">
+                                    <!-- 动态填充选中的联系人列表 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmBatchDeleteBtn"
+                            onclick="showBatchFinalConfirmation()">
+                        <i class="fas fa-trash me-1"></i>确认批量删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', function () {
+            filterContacts();
+        });
+
+        // 综合筛选功能
+        function filterContacts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const roomFilter = document.getElementById('roomFilter').value;
+
+            // 筛选联系人数据
+            filteredContacts = allContacts.filter(contact => {
+                const searchData = contact.searchData.toLowerCase();
+                const roomData = contact.roomData;
+
+                let showContact = true;
+
+                // 搜索筛选
+                if (searchTerm && !searchData.includes(searchTerm)) {
+                    showContact = false;
+                }
+
+                // 房间筛选
+                if (roomFilter && roomData !== roomFilter) {
+                    showContact = false;
+                }
+
+                return showContact;
+            });
+
+            // 重置到第一页
+            currentPage = 1;
+
+            // 更新分页显示
+            updatePagination();
+
+            // 更新联系人计数
+            updateContactCount(filteredContacts.length);
+        }
+
+        // 房间筛选
+        function filterByRoom() {
+            filterContacts();
+        }
+
+        // 清空搜索
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roomFilter').value = '';
+
+            // 重置筛选结果
+            filteredContacts = [...allContacts];
+            currentPage = 1;
+            updatePagination();
+            updateContactCount(filteredContacts.length);
+        }
+
+        // 更新行号
+        function updateRowNumbers() {
+            const visibleRows = document.querySelectorAll('.contact-row[style=""], .contact-row:not([style])');
+            visibleRows.forEach((row, index) => {
+                row.querySelector('.row-number').textContent = index + 1;
+            });
+        }
+
+        // 更新联系人计数
+        function updateContactCount(count) {
+            const countBadge = document.getElementById('contactCount');
+            if (countBadge) {
+                countBadge.textContent = count;
+            }
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function () {
+                showToast('已复制到剪贴板', 'success');
+            }).catch(function () {
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast('已复制到剪贴板', 'success');
+            });
+        }
+
+        // 显示提示消息
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const contactCheckboxes = document.querySelectorAll('.contact-checkbox');
+
+            // 只允许选择，不允许取消
+            if (selectAllCheckbox.checked) {
+                contactCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            } else {
+                // 如果试图取消全选，重新选中
+                selectAllCheckbox.checked = true;
+                contactCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            }
+
+            updateBatchActions();
+        }
+
+        // 选择所有可见项
+        function selectAll() {
+            // 获取当前显示的视图
+            const tableView = document.getElementById('tableView');
+            const cardView = document.getElementById('cardView');
+            const isTableView = tableView.style.display !== 'none';
+
+            let visibleCheckboxes;
+            if (isTableView) {
+                visibleCheckboxes = document.querySelectorAll('.contact-row:not([style*="none"]) .contact-checkbox');
+            } else {
+                visibleCheckboxes = document.querySelectorAll('.contact-card:not([style*="none"]) .contact-checkbox');
+            }
+
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+            visibleCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+
+            selectAllCheckbox.checked = visibleCheckboxes.length > 0;
+            updateBatchActions();
+        }
+
+        // 更新批量操作按钮状态
+        function updateBatchActions() {
+            const checkedBoxes = document.querySelectorAll('.contact-checkbox:checked');
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+
+            if (checkedBoxes.length > 0) {
+                batchDeleteBtn.disabled = false;
+                batchDeleteBtn.innerHTML = `<i class="fas fa-trash"></i> 批量删除 (${checkedBoxes.length})`;
+            } else {
+                batchDeleteBtn.disabled = true;
+                batchDeleteBtn.innerHTML = '<i class="fas fa-trash"></i> 批量删除';
+            }
+        }
+
+        // 批量删除 - 显示确认模态框
+        function batchDelete() {
+            const checkedBoxes = document.querySelectorAll('.contact-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                showToast('请先选择要删除的联系人', 'warning');
+                return;
+            }
+
+            // 获取选中的联系人信息
+            const selectedContacts = [];
+            checkedBoxes.forEach(checkbox => {
+                const row = checkbox.closest('.contact-row') || checkbox.closest('.contact-card');
+                if (row) {
+                    const name = row.querySelector('.contact-name-modern, .contact-name-card')?.textContent?.trim() || '未知';
+                    const room = row.getAttribute('data-room') || '未知';
+                    let phone = '未知';
+
+                    // 尝试多种方式获取电话号码
+                    const phoneElement = row.querySelector('.phone-number');
+                    if (phoneElement) {
+                        phone = phoneElement.textContent?.trim() || '未知';
+                    } else {
+                        // 在卡片视图中查找电话
+                        const phoneSpans = row.querySelectorAll('.detail-item span');
+                        phoneSpans.forEach(span => {
+                            const text = span.textContent?.trim();
+                            if (text && /^1[3-9]\d{9}$/.test(text)) {
+                                phone = text;
+                            }
+                        });
+                    }
+
+                    selectedContacts.push({
+                        id: checkbox.value,
+                        name: name,
+                        room: room,
+                        phone: phone
+                    });
+                }
+            });
+
+            // 填充批量删除模态框信息
+            document.getElementById('batchDeleteCount').textContent = selectedContacts.length;
+
+            const contactsList = document.getElementById('batchDeleteList');
+            contactsList.innerHTML = selectedContacts.map(contact => `
+                <div class="contact-item">
+                    <div class="contact-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="contact-details">
+                        <div class="contact-name">${contact.name}</div>
+                        <div class="contact-meta">
+                            <span class="room-info">
+                                <i class="fas fa-home me-1"></i>房间 ${contact.room}
+                            </span>
+                            <span class="phone-info">
+                                <i class="fas fa-phone me-1"></i>${contact.phone}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 存储要删除的联系人ID列表
+            document.getElementById('confirmBatchDeleteBtn').setAttribute('data-contact-ids',
+                selectedContacts.map(c => c.id).join(','));
+
+            // 显示批量删除确认模态框
+            const modal = new bootstrap.Modal(document.getElementById('batchDeleteModal'));
+            modal.show();
+        }
+
+        // 显示批量删除最终确认对话框
+        function showBatchFinalConfirmation() {
+            const contactCount = document.getElementById('batchDeleteCount').textContent;
+            const contactsList = document.getElementById('batchDeleteList').innerHTML;
+
+            // 填充批量删除最终确认对话框信息
+            document.getElementById('finalBatchCount').textContent = contactCount;
+            document.getElementById('finalBatchList').innerHTML = contactsList;
+
+            // 关闭第一个模态框
+            bootstrap.Modal.getInstance(document.getElementById('batchDeleteModal')).hide();
+
+            // 显示最终确认对话框
+            setTimeout(() => {
+                const modal = new bootstrap.Modal(document.getElementById('batchFinalConfirmModal'));
+                modal.show();
+            }, 300);
+        }
+
+        // 确认批量删除
+        function confirmBatchDelete() {
+            const contactIdsStr = document.getElementById('confirmBatchDeleteBtn').getAttribute('data-contact-ids');
+            const contactIds = contactIdsStr.split(',');
+
+            // 显示加载状态
+            const finalBtn = document.getElementById('batchFinalConfirmBtn');
+            const originalText = finalBtn.innerHTML;
+            finalBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>删除中...';
+            finalBtn.disabled = true;
+
+            // 批量删除请求
+            Promise.all(contactIds.map(id =>
+                fetch(`/api/contacts_new/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+            ))
+                .then(responses => Promise.all(responses.map(r => r.json())))
+                .then(results => {
+                    const successCount = results.filter(r => r.success).length;
+                    const failCount = results.length - successCount;
+
+                    if (failCount === 0) {
+                        showToast(`成功删除 ${successCount} 个联系人！`, 'success');
+                    } else if (successCount === 0) {
+                        showToast(`删除失败，${failCount} 个联系人删除失败`, 'error');
+                    } else {
+                        showToast(`部分删除成功：${successCount} 个成功，${failCount} 个失败`, 'warning');
+                    }
+
+                    // 关闭模态框
+                    bootstrap.Modal.getInstance(document.getElementById('batchFinalConfirmModal')).hide();
+                    // 刷新页面
+                    setTimeout(() => location.reload(), 1000);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('批量删除失败，请稍后重试', 'error');
+                    // 恢复按钮状态
+                    finalBtn.innerHTML = originalText;
+                    finalBtn.disabled = false;
+                });
+        }
+
+        // 添加联系人
+        function addContact() {
+            // 清空表单
+            document.getElementById('addContactForm').reset();
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('addContactModal'));
+            modal.show();
+        }
+
+        // 提交添加联系人
+        function submitAddContact() {
+            const form = document.getElementById('addContactForm');
+            const formData = new FormData(form);
+
+            // 验证表单
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const data = {
+                name: formData.get('name'),
+                roomId: formData.get('roomId'),
+                phone: formData.get('phone'),
+                id_card: formData.get('id_card')
+            };
+
+            // 发送添加请求
+            fetch('/api/contacts_new', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('联系人添加成功！', 'success');
+                        // 关闭模态框
+                        bootstrap.Modal.getInstance(document.getElementById('addContactModal')).hide();
+                        // 强制刷新页面，避免缓存问题
+                        setTimeout(() => location.reload(true), 1500);
+                    } else {
+                        showToast('添加失败：' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('添加失败，请稍后重试', 'error');
+                });
+        }
+
+        // 查看联系人详情
+        function viewContact(contactId) {
+            // 获取联系人详情
+            fetch(`/api/contacts_new/${contactId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast('获取联系人信息失败：' + data.error, 'error');
+                        return;
+                    }
+
+                    // 填充详情数据
+                    document.getElementById('viewName').textContent = data.name;
+                    document.getElementById('viewRoomId').textContent = data.roomId;
+                    document.getElementById('viewPhone').textContent = data.phone;
+                    document.getElementById('viewIdCard').textContent = data.id_card;
+                    document.getElementById('viewCreatedAt').textContent = data.created_at;
+
+                    // 存储当前联系人ID用于编辑
+                    document.getElementById('viewContactModal').setAttribute('data-contact-id', contactId);
+
+                    // 显示模态框
+                    const modal = new bootstrap.Modal(document.getElementById('viewContactModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('获取联系人信息失败', 'error');
+                });
+        }
+
+        // 从查看模态框切换到编辑模态框
+        function editContactFromView() {
+            const contactId = document.getElementById('viewContactModal').getAttribute('data-contact-id');
+            // 关闭查看模态框
+            bootstrap.Modal.getInstance(document.getElementById('viewContactModal')).hide();
+            // 打开编辑模态框
+            setTimeout(() => editContact(contactId), 300);
+        }
+
+        // 编辑联系人
+        function editContact(contactId) {
+            // 获取联系人详情
+            fetch(`/api/contacts_new/${contactId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast('获取联系人信息失败：' + data.error, 'error');
+                        return;
+                    }
+
+                    // 填充编辑表单
+                    document.getElementById('editContactId').value = data.id;
+                    document.getElementById('editName').value = data.name;
+                    document.getElementById('editRoomId').value = data.roomId;
+                    document.getElementById('editPhone').value = data.phone;
+                    document.getElementById('editIdCard').value = data.id_card;
+
+                    // 显示编辑模态框
+                    const modal = new bootstrap.Modal(document.getElementById('editContactModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('获取联系人信息失败', 'error');
+                });
+        }
+
+        // 提交编辑联系人
+        function submitEditContact() {
+            const form = document.getElementById('editContactForm');
+            const formData = new FormData(form);
+
+            // 验证表单
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const contactId = formData.get('id');
+            const data = {
+                name: formData.get('name'),
+                roomId: formData.get('roomId'),
+                phone: formData.get('phone'),
+                id_card: formData.get('id_card')
+            };
+
+            // 发送更新请求
+            fetch(`/api/contacts_new/${contactId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('联系人更新成功！', 'success');
+                        // 关闭模态框
+                        bootstrap.Modal.getInstance(document.getElementById('editContactModal')).hide();
+                        // 刷新页面
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast('更新失败：' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('更新失败，请稍后重试', 'error');
+                });
+        }
+
+        // 拨打电话
+        function callContact(phone) {
+            if (confirm(`确定要拨打电话 ${phone} 吗？`)) {
+                window.location.href = `tel:${phone}`;
+            }
+        }
+
+        // 导出联系人
+        function exportContacts() {
+            showToast('导出联系人功能开发中...', 'info');
+        }
+
+        // 导入联系人
+        function importContacts() {
+            showToast('批量导入联系人功能开发中...', 'info');
+        }
+
+        // 刷新联系人列表
+        function refreshContacts() {
+            showToast('正在刷新数据...', 'info');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }
+
+        // 视图切换功能
+        function switchView(viewType) {
+            const tableView = document.getElementById('tableView');
+            const cardView = document.getElementById('cardView');
+            const viewButtons = document.querySelectorAll('.btn-view-option');
+
+            // 移除所有活跃状态
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+
+            if (viewType === 'table') {
+                tableView.style.display = 'block';
+                cardView.style.display = 'none';
+                document.querySelector('[onclick="switchView(\'table\')"]').classList.add('active');
+                itemsPerPage = 10; // 表格视图每页10条
+            } else {
+                tableView.style.display = 'none';
+                cardView.style.display = 'block';
+                document.querySelector('[onclick="switchView(\'card\')"]').classList.add('active');
+                itemsPerPage = 12; // 卡片视图每页12条
+            }
+
+            // 重置到第一页
+            currentPage = 1;
+
+            // 重新应用筛选和分页
+            if (typeof filteredContacts !== 'undefined') {
+                updatePagination();
+            }
+        }
+
+        // 表格排序功能
+        let sortDirection = {};
+
+        function sortTable(column) {
+            const tbody = document.getElementById('contactsTableBody');
+            const rows = Array.from(tbody.querySelectorAll('.contact-row'));
+
+            // 切换排序方向
+            sortDirection[column] = sortDirection[column] === 'asc' ? 'desc' : 'asc';
+
+            // 更新排序图标
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.className = 'fas fa-sort sort-icon';
+            });
+
+            const currentIcon = document.querySelector(`[onclick="sortTable('${column}')"] .sort-icon`);
+            if (sortDirection[column] === 'asc') {
+                currentIcon.className = 'fas fa-sort-up sort-icon';
+            } else {
+                currentIcon.className = 'fas fa-sort-down sort-icon';
+            }
+
+            // 排序逻辑
+            rows.sort((a, b) => {
+                let aValue, bValue;
+
+                switch (column) {
+                    case 'index':
+                        aValue = parseInt(a.querySelector('.row-number-badge').textContent);
+                        bValue = parseInt(b.querySelector('.row-number-badge').textContent);
+                        break;
+                    case 'room':
+                        aValue = a.getAttribute('data-room');
+                        bValue = b.getAttribute('data-room');
+                        break;
+                    case 'name':
+                        aValue = a.querySelector('.contact-name-modern').textContent;
+                        bValue = b.querySelector('.contact-name-modern').textContent;
+                        break;
+                    case 'phone':
+                        aValue = a.querySelector('.phone-number').textContent;
+                        bValue = b.querySelector('.phone-number').textContent;
+                        break;
+                    case 'date':
+                        aValue = a.querySelector('.date-main').textContent;
+                        bValue = b.querySelector('.date-main').textContent;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (sortDirection[column] === 'asc') {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            });
+
+            // 重新插入排序后的行
+            rows.forEach(row => tbody.appendChild(row));
+
+            // 更新行号
+            updateRowNumbers();
+        }
+
+        // 删除联系人 - 显示确认模态框
+        function deleteContact(contactId, contactName) {
+            // 先获取联系人详细信息
+            fetch(`/api/contacts_new/${contactId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast('获取联系人信息失败：' + data.error, 'error');
+                        return;
+                    }
+
+                    // 填充删除确认模态框的信息
+                    document.getElementById('deleteContactName').textContent = data.name;
+                    document.getElementById('deletePreviewName').textContent = data.name;
+                    document.getElementById('deletePreviewRoom').textContent = data.roomId;
+                    document.getElementById('deletePreviewPhone').textContent = data.phone;
+
+                    // 存储要删除的联系人ID
+                    document.getElementById('confirmDeleteBtn').setAttribute('data-contact-id', contactId);
+
+                    // 显示删除确认模态框
+                    const modal = new bootstrap.Modal(document.getElementById('deleteContactModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('获取联系人信息失败', 'error');
+                });
+        }
+
+        // 显示最终确认对话框
+        function showFinalConfirmation() {
+            const contactName = document.getElementById('deleteContactName').textContent;
+            const contactRoom = document.getElementById('deletePreviewRoom').textContent;
+            const contactPhone = document.getElementById('deletePreviewPhone').textContent;
+
+            // 填充最终确认对话框信息
+            document.getElementById('finalContactName').textContent = contactName;
+            document.getElementById('finalPreviewName').textContent = contactName;
+            document.getElementById('finalPreviewRoom').textContent = contactRoom;
+            document.getElementById('finalPreviewPhone').textContent = contactPhone;
+
+            // 关闭第一个模态框
+            bootstrap.Modal.getInstance(document.getElementById('deleteContactModal')).hide();
+
+            // 显示最终确认对话框
+            setTimeout(() => {
+                const modal = new bootstrap.Modal(document.getElementById('finalConfirmModal'));
+                modal.show();
+            }, 300);
+        }
+
+        // 确认删除联系人
+        function confirmDeleteContact() {
+            const contactId = document.getElementById('confirmDeleteBtn').getAttribute('data-contact-id');
+            const contactName = document.getElementById('finalContactName').textContent;
+
+            // 显示加载状态
+            const finalBtn = document.getElementById('finalConfirmBtn');
+            const originalText = finalBtn.innerHTML;
+            finalBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>删除中...';
+            finalBtn.disabled = true;
+
+            // 发送删除请求
+            fetch(`/api/contacts_new/${contactId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(`联系人 "${contactName}" 删除成功！`, 'success');
+                        // 关闭模态框
+                        bootstrap.Modal.getInstance(document.getElementById('finalConfirmModal')).hide();
+                        // 刷新页面
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast('删除失败：' + data.message, 'error');
+                        // 恢复按钮状态
+                        finalBtn.innerHTML = originalText;
+                        finalBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('删除失败，请稍后重试', 'error');
+                    // 恢复按钮状态
+                    finalBtn.innerHTML = originalText;
+                    finalBtn.disabled = false;
+                });
+        }
+
+        // 数字动画效果
+        function animateNumbers() {
+            const numbers = document.querySelectorAll('.stats-number[data-count]');
+            numbers.forEach(number => {
+                const target = parseInt(number.getAttribute('data-count'));
+                let current = 0;
+                const increment = target / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    number.textContent = Math.floor(current);
+                }, 30);
+            });
+        }
+
+        // 快速筛选功能
+        function quickFilter(type) {
+            // 移除所有活跃状态
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.remove('active');
+            });
+
+            // 添加当前活跃状态
+            event.target.classList.add('active');
+
+            const rows = document.querySelectorAll('.contact-row');
+
+            rows.forEach(row => {
+                let showRow = true;
+
+                switch (type) {
+                    case 'all':
+                        showRow = true;
+                        break;
+                    case 'recent':
+                        // 这里可以根据创建时间筛选
+                        showRow = true; // 暂时显示所有
+                        break;
+                    case 'phone':
+                        const phone = row.querySelector('.contact-phone').textContent.trim();
+                        showRow = phone && phone !== '-';
+                        break;
+                    case 'no-phone':
+                        const noPhone = row.querySelector('.contact-phone').textContent.trim();
+                        showRow = !noPhone || noPhone === '-';
+                        break;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+
+            updateRowNumbers();
+            updateContactCount(document.querySelectorAll('.contact-row[style=""], .contact-row:not([style])').length);
+        }
+
+
+        // 分页相关变量
+        let currentPage = 1;
+        let itemsPerPage = 12; // 默认卡片视图每页12条
+        let allContacts = [];
+        let filteredContacts = [];
+
+        // 初始化联系人数据
+        function initContactsData() {
+            allContacts = [];
+
+            // 从表格行中提取数据
+            const tableRows = document.querySelectorAll('#tableView .contact-row');
+            tableRows.forEach((row, index) => {
+                const contact = {
+                    element: row,
+                    cardElement: document.querySelectorAll('#cardView .contact-card')[index],
+                    searchData: row.getAttribute('data-search') || '',
+                    roomData: row.getAttribute('data-room') || '',
+                    index: index
+                };
+                allContacts.push(contact);
+            });
+
+            // 初始化筛选结果为所有联系人
+            filteredContacts = [...allContacts];
+        }
+
+        // 初始化分页
+        function initPagination() {
+            // 获取所有联系人数据
+            const tableRows = document.querySelectorAll('.contact-row');
+            const cardItems = document.querySelectorAll('.contact-card');
+
+            allContacts = Array.from(tableRows).map((row, index) => ({
+                tableElement: row,
+                cardElement: cardItems[index],
+                searchData: row.getAttribute('data-search'),
+                roomData: row.getAttribute('data-room')
+            }));
+
+            filteredContacts = [...allContacts];
+            updatePagination();
+        }
+
+        // 更新分页显示
+        function updatePagination() {
+            const totalItems = filteredContacts.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            // 确保当前页在有效范围内
+            if (currentPage > totalPages) {
+                currentPage = Math.max(1, totalPages);
+            }
+
+            // 显示当前页的数据
+            displayCurrentPage();
+
+            // 更新分页信息
+            updatePaginationInfo(totalItems, totalPages);
+        }
+
+        // 显示当前页数据
+        function displayCurrentPage() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+
+            // 隐藏所有项目
+            allContacts.forEach(contact => {
+                if (contact.element) contact.element.style.display = 'none';
+                if (contact.cardElement) contact.cardElement.style.display = 'none';
+            });
+
+            // 显示当前页的项目
+            filteredContacts.slice(startIndex, endIndex).forEach((contact, index) => {
+                const tableView = document.getElementById('tableView');
+                const isTableView = tableView.style.display !== 'none';
+
+                if (isTableView && contact.element) {
+                    contact.element.style.display = '';
+                    // 更新行号
+                    const rowNumber = contact.element.querySelector('.row-number');
+                    if (rowNumber) {
+                        rowNumber.textContent = startIndex + index + 1;
+                    }
+                } else if (!isTableView && contact.cardElement) {
+                    contact.cardElement.style.display = '';
+                }
+            });
+        }
+
+        // 更新分页信息
+        function updatePaginationInfo(totalItems, totalPages) {
+            const paginationText = document.querySelector('.pagination-text');
+            if (paginationText) {
+                paginationText.textContent = `共 ${totalItems} 条联系人记录，当前第 ${currentPage} 页，共 ${totalPages} 页`;
+            }
+        }
+
+        // 切换页面
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                updatePagination();
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始化AOS动画
+            if (typeof AOS !== 'undefined') {
+                AOS.init({
+                    duration: 800,
+                    easing: 'ease-in-out',
+                    once: true,
+                    offset: 100
+                });
+            }
+
+            // 数字动画
+            setTimeout(animateNumbers, 800);
+
+            // 设置联系人列表导航为活跃状态
+            const contactsLink = document.querySelector('a[href*="contacts_new"]');
+            if (contactsLink) {
+                contactsLink.classList.add('active');
+            }
+
+            // 初始化联系人数据
+            initContactsData();
+
+            // 初始化分页
+            initPagination();
+
+            // 设置默认为卡片视图
+            switchView('card');
+
+            // 添加表格行的悬停效果
+            const tableRows = document.querySelectorAll('.contact-row');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function () {
+                    this.style.transform = 'scale(1.01)';
+                    this.style.transition = 'transform 0.2s ease';
+                });
+
+                row.addEventListener('mouseleave', function () {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+
+            // 添加卡片悬停效果
+            const statsCards = document.querySelectorAll('.stats-card');
+            statsCards.forEach(card => {
+                card.addEventListener('mouseenter', function () {
+                    this.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+
+                card.addEventListener('mouseleave', function () {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // 添加搜索框焦点效果
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('focus', function () {
+                    this.parentElement.style.transform = 'scale(1.02)';
+                });
+
+                searchInput.addEventListener('blur', function () {
+                    this.parentElement.style.transform = 'scale(1)';
+                });
+            }
+        });
+    </script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- 批量删除最终确认对话框 -->
+    <div class="modal fade" id="batchFinalConfirmModal" tabindex="-1" aria-labelledby="batchFinalConfirmModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="batchFinalConfirmModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>确认批量删除
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="batch-final-confirm-content">
+                        <div class="confirm-icon">
+                            <i class="fas fa-users-slash"></i>
+                        </div>
+                        <h6 class="confirm-title">您确定要批量删除选中的联系人吗？</h6>
+                        <p class="confirm-message">
+                            您即将删除 <strong id="finalBatchCount" class="text-danger"></strong> 个联系人，
+                            此操作将永久删除这些联系人的所有信息，且无法恢复。
+                        </p>
+                        <div class="batch-summary">
+                            <h6 class="summary-title">
+                                <i class="fas fa-list me-2"></i>即将删除的联系人：
+                            </h6>
+                            <div id="finalBatchList" class="final-contacts-list">
+                                <!-- 动态填充选中的联系人列表 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-danger" id="batchFinalConfirmBtn"
+                            onclick="confirmBatchDelete()">
+                        <i class="fas fa-trash me-1"></i>确认批量删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

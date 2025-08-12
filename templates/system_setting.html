@@ -1,0 +1,853 @@
+{% extends "base_new.html" %}
+
+{% block title %}系统设置 - 租房管理系统{% endblock %}
+
+{% block page_title %}系统设置{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/system-settings.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- 设置面板 -->
+        <div class="col-lg-8">
+            <!-- 字体设置 -->
+            <div class="settings-section">
+                <h5 class="section-title">
+                    <i class="fas fa-font me-3"></i>字体设置
+                </h5>
+                
+                <!-- 字体大小 -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="fontSizeRange" class="form-label">字体大小</label>
+                        <div class="input-group">
+                            <input type="range" class="form-control" id="fontSizeRange" min="12" max="24" value="14" step="1">
+                            <span class="input-group-text" id="fontSizeValue">14px</span>
+                        </div>
+                        <div class="form-text">调整整个系统的字体大小 (12px - 24px)</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">预览效果</label>
+                        <div class="preview-box" id="fontSizePreview">
+                            <div>
+                                <h6>标题示例 - Heading Example</h6>
+                                <p>这是正文文本预览 - This is body text preview</p>
+                                <small>小字体文本 - Small text</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 字体样式 -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="fontFamilySelect" class="form-label">字体样式</label>
+                        <select class="form-select" id="fontFamilySelect">
+                            <option value="'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">微软雅黑 (默认)</option>
+                            <option value="'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">苹方 / 冬青黑体</option>
+                            <option value="'Source Han Sans CN', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif">思源黑体</option>
+                            <option value="'SimSun', '宋体', serif">宋体 (衬线)</option>
+                            <option value="'SimHei', '黑体', sans-serif">黑体</option>
+                            <option value="'KaiTi', '楷体', serif">楷体</option>
+                            <option value="'Courier New', 'Consolas', 'Monaco', monospace">等宽字体</option>
+                            <option value="'Arial', 'Helvetica Neue', sans-serif">Arial</option>
+                            <option value="'Times New Roman', 'Georgia', serif">Times New Roman</option>
+                        </select>
+                        <div class="form-text">选择系统使用的字体系列</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">字体预览</label>
+                        <div class="preview-box" id="fontFamilyPreview">
+                            <div>
+                                <h6>标题字体预览</h6>
+                                <p>中文字体效果：这是一段测试文本</p>
+                                <p>English Font Effect: This is test text</p>
+                                <p>数字混合：ABC123测试456XYZ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主题设置 -->
+            <div class="settings-section">
+                <h5 class="section-title">
+                    <i class="fas fa-palette me-3"></i>主题设置
+                </h5>
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label class="form-label">选择主题</label>
+                        <div class="theme-options">
+                            <div class="theme-option active" data-theme="default">
+                                <div class="theme-preview default-theme"></div>
+                                <span>默认主题</span>
+                            </div>
+                            <div class="theme-option" data-theme="light">
+                                <div class="theme-preview light-theme"></div>
+                                <span>明亮主题</span>
+                            </div>
+                            <div class="theme-option" data-theme="dark">
+                                <div class="theme-preview dark-theme"></div>
+                                <span>深色主题</span>
+                            </div>
+                            <div class="theme-option" data-theme="blue">
+                                <div class="theme-preview blue-theme"></div>
+                                <span>海洋蓝</span>
+                            </div>
+                            <div class="theme-option" data-theme="green">
+                                <div class="theme-preview green-theme"></div>
+                                <span>自然绿</span>
+                            </div>
+                            <div class="theme-option" data-theme="purple">
+                                <div class="theme-preview purple-theme"></div>
+                                <span>典雅紫</span>
+                            </div>
+                        </div>
+                        <div class="form-text">选择您喜欢的系统主题风格</div>
+                    </div>
+                </div>
+
+                <!-- 自定义背景色 -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="customBgColor" class="form-label">自定义背景色</label>
+                        <div class="input-group">
+                            <input type="color" class="form-control form-control-color" id="customBgColor" value="#f8f9fa">
+                            <input type="text" class="form-select" id="customBgInput" value="#f8f9fa" placeholder="输入颜色代码">
+                            <button class="btn btn-outline-secondary" type="button" id="applyCustomBg">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">可以输入十六进制颜色代码或使用颜色选择器</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">背景预览</label>
+                        <div class="preview-box" id="backgroundPreview">
+                            <div>
+                                <h6>背景效果预览</h6>
+                                <p>这是在当前背景下的文本显示效果</p>
+                                <button class="btn btn-primary btn-sm">按钮样式</button>
+                                <button class="btn btn-outline-secondary btn-sm">辅助按钮</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 显示设置 -->
+            <div class="settings-section">
+                <h5 class="section-title">
+                    <i class="fas fa-desktop me-3"></i>显示设置
+                </h5>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="pageZoom" class="form-label">页面缩放</label>
+                        <div class="input-group">
+                            <input type="range" class="form-control" id="pageZoom" min="75" max="150" value="100" step="5">
+                            <span class="input-group-text" id="zoomValue">100%</span>
+                        </div>
+                        <div class="form-text">调整整个页面的缩放比例</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-4">
+                            <input class="form-check-input" type="checkbox" id="enableAnimations" checked>
+                            <label class="form-check-label" for="enableAnimations">
+                                启用动画效果
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="compactMode">
+                            <label class="form-check-label" for="compactMode">
+                                紧凑模式 (减少间距)
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="highContrast">
+                            <label class="form-check-label" for="highContrast">
+                                高对比度模式
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统偏好 -->
+            <div class="settings-section">
+                <h5 class="section-title">
+                    <i class="fas fa-cogs me-3"></i>系统偏好
+                </h5>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="language" class="form-label">界面语言</label>
+                        <select class="form-select" id="language">
+                            <option value="zh-CN" selected>简体中文</option>
+                            <option value="zh-TW">繁体中文</option>
+                            <option value="en-US">English</option>
+                        </select>
+                        <div class="form-text">选择系统界面显示语言</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="dateFormat" class="form-label">日期格式</label>
+                        <select class="form-select" id="dateFormat">
+                            <option value="YYYY-MM-DD" selected>2024-01-15</option>
+                            <option value="YYYY/MM/DD">2024/01/15</option>
+                            <option value="MM/DD/YYYY">01/15/2024</option>
+                            <option value="DD-MM-YYYY">15-01-2024</option>
+                            <option value="DD/MM/YYYY">15/01/2024</option>
+                        </select>
+                        <div class="form-text">选择日期显示格式</div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="itemsPerPage" class="form-label">每页显示条数</label>
+                        <select class="form-select" id="itemsPerPage">
+                            <option value="10" selected>10 条/页</option>
+                            <option value="20">20 条/页</option>
+                            <option value="50">50 条/页</option>
+                            <option value="100">100 条/页</option>
+                        </select>
+                        <div class="form-text">设置列表页面每页显示的数据条数</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-4">
+                            <input class="form-check-input" type="checkbox" id="autoSave" checked>
+                            <label class="form-check-label" for="autoSave">
+                                自动保存设置
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="showTips" checked>
+                            <label class="form-check-label" for="showTips">
+                                显示操作提示
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="soundEffects">
+                            <label class="form-check-label" for="soundEffects">
+                                启用音效提示
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="settings-actions">
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    <button class="btn btn-primary" id="applySettings">
+                        <i class="fas fa-save me-2"></i>保存并应用设置
+                    </button>
+                    <button class="btn btn-success" id="previewSettings">
+                        <i class="fas fa-eye me-2"></i>预览设置效果
+                    </button>
+                    <button class="btn btn-warning" id="resetSettings">
+                        <i class="fas fa-undo me-2"></i>重置为默认
+                    </button>
+                    <button class="btn btn-info" id="exportSettings">
+                        <i class="fas fa-download me-2"></i>导出设置
+                    </button>
+                    <button class="btn btn-secondary" id="importSettings">
+                        <i class="fas fa-upload me-2"></i>导入设置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 当前设置信息 -->
+        <div class="col-lg-4">
+            <div class="current-settings">
+                <h6 class="mb-3">
+                    <i class="fas fa-info-circle me-2"></i>当前设置信息
+                </h6>
+                <div class="info-item">
+                    <label>字体大小:</label>
+                    <span id="currentFontSize">14px</span>
+                </div>
+                <div class="info-item">
+                    <label>字体样式:</label>
+                    <span id="currentFontFamily">微软雅黑</span>
+                </div>
+                <div class="info-item">
+                    <label>当前主题:</label>
+                    <span id="currentTheme">默认主题</span>
+                </div>
+                <div class="info-item">
+                    <label>页面缩放:</label>
+                    <span id="currentZoom">100%</span>
+                </div>
+                <div class="info-item">
+                    <label>界面语言:</label>
+                    <span id="currentLanguage">简体中文</span>
+                </div>
+                <div class="info-item">
+                    <label>最后更新:</label>
+                    <span id="lastUpdate">未设置</span>
+                </div>
+            </div>
+
+            <!-- 快速操作 -->
+            <div class="settings-section mt-4">
+                <h6 class="mb-3">
+                    <i class="fas fa-bolt me-2"></i>快速操作
+                </h6>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="quickSetTheme('light')">
+                        <i class="fas fa-sun me-2"></i>切换到明亮主题
+                    </button>
+                    <button class="btn btn-outline-dark btn-sm" onclick="quickSetTheme('dark')">
+                        <i class="fas fa-moon me-2"></i>切换到深色主题
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="quickSetFontSize(16)">
+                        <i class="fas fa-search-plus me-2"></i>放大字体
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="quickSetFontSize(12)">
+                        <i class="fas fa-search-minus me-2"></i>缩小字体
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetToDefaults()">
+                        <i class="fas fa-refresh me-2"></i>恢复默认设置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 设置提示 -->
+            <div class="alert alert-info mt-4">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>提示：</strong>
+                <ul class="mb-0 mt-2">
+                    <li>修改设置后需要点击"保存并应用"才会生效</li>
+                    <li>可以使用"预览"功能查看效果</li>
+                    <li>深色主题适合在光线较暗的环境中使用</li>
+                    <li>字体大小建议设置在12-18px之间</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导入设置模态框 -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-upload me-2"></i>导入设置
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="settingsFile" class="form-label">选择设置文件</label>
+                    <input type="file" class="form-control" id="settingsFile" accept=".json">
+                    <div class="form-text">支持 .json 格式的设置文件</div>
+                </div>
+                <div class="mb-3">
+                    <label for="settingsText" class="form-label">或粘贴设置文本</label>
+                    <textarea class="form-control" id="settingsText" rows="5" placeholder="粘贴设置的JSON文本..."></textarea>
+                </div>
+                <div class="preview-demo" id="importPreview" style="display: none;">
+                    <h6>导入预览</h6>
+                    <div id="importPreviewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmImport">确认导入</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 系统设置管理类
+class SystemSettingsManager {
+    constructor() {
+        this.settings = {
+            fontSize: 14,
+            fontFamily: "'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+            theme: 'default',
+            customBackground: '#f8f9fa',
+            pageZoom: 100,
+            enableAnimations: true,
+            compactMode: false,
+            highContrast: false,
+            language: 'zh-CN',
+            dateFormat: 'YYYY-MM-DD',
+            itemsPerPage: 10,
+            autoSave: true,
+            showTips: true,
+            soundEffects: false
+        };
+        
+        this.fontFamilyNames = {
+            "'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif": "微软雅黑",
+            "'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif": "苹方",
+            "'Source Han Sans CN', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif": "思源黑体",
+            "'SimSun', '宋体', serif": "宋体",
+            "'SimHei', '黑体', sans-serif": "黑体",
+            "'KaiTi', '楷体', serif": "楷体",
+            "'Courier New', 'Consolas', 'Monaco', monospace": "等宽字体",
+            "'Arial', 'Helvetica Neue', sans-serif": "Arial",
+            "'Times New Roman', 'Georgia', serif": "Times New Roman"
+        };
+        
+        this.themeNames = {
+            'default': '默认主题',
+            'light': '明亮主题',
+            'dark': '深色主题',
+            'blue': '海洋蓝',
+            'green': '自然绿',
+            'purple': '典雅紫'
+        };
+        
+        this.init();
+        this.loadSettings();
+    }
+
+    init() {
+        this.initEventListeners();
+        this.updateCurrentInfo();
+    }
+
+    initEventListeners() {
+        // 字体大小滑块
+        const fontSizeRange = document.getElementById('fontSizeRange');
+        const fontSizeValue = document.getElementById('fontSizeValue');
+        const fontSizePreview = document.getElementById('fontSizePreview');
+
+        fontSizeRange.addEventListener('input', (e) => {
+            const size = parseInt(e.target.value);
+            fontSizeValue.textContent = size + 'px';
+            fontSizePreview.style.fontSize = size + 'px';
+            this.settings.fontSize = size;
+            this.updateCurrentInfo();
+            if (this.settings.autoSave) {
+                this.previewSettings();
+            }
+        });
+
+        // 字体样式选择
+        const fontFamilySelect = document.getElementById('fontFamilySelect');
+        const fontFamilyPreview = document.getElementById('fontFamilyPreview');
+
+        fontFamilySelect.addEventListener('change', (e) => {
+            const fontFamily = e.target.value;
+            fontFamilyPreview.style.fontFamily = fontFamily;
+            this.settings.fontFamily = fontFamily;
+            this.updateCurrentInfo();
+            if (this.settings.autoSave) {
+                this.previewSettings();
+            }
+        });
+
+        // 主题选择
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                
+                const theme = option.dataset.theme;
+                this.settings.theme = theme;
+                this.updateCurrentInfo();
+                if (this.settings.autoSave) {
+                    this.previewSettings();
+                }
+            });
+        });
+
+        // 自定义背景色
+        const customBgColor = document.getElementById('customBgColor');
+        const customBgInput = document.getElementById('customBgInput');
+        const applyCustomBg = document.getElementById('applyCustomBg');
+        const backgroundPreview = document.getElementById('backgroundPreview');
+
+        const updateCustomBg = () => {
+            const color = customBgColor.value;
+            customBgInput.value = color;
+            backgroundPreview.style.background = color;
+            this.settings.customBackground = color;
+            this.settings.theme = 'custom';
+            themeOptions.forEach(opt => opt.classList.remove('active'));
+            if (this.settings.autoSave) {
+                this.previewSettings();
+            }
+        };
+
+        customBgColor.addEventListener('change', updateCustomBg);
+        customBgInput.addEventListener('change', (e) => {
+            customBgColor.value = e.target.value;
+            updateCustomBg();
+        });
+        applyCustomBg.addEventListener('click', updateCustomBg);
+
+        // 页面缩放
+        const pageZoom = document.getElementById('pageZoom');
+        const zoomValue = document.getElementById('zoomValue');
+
+        pageZoom.addEventListener('input', (e) => {
+            const zoom = parseInt(e.target.value);
+            zoomValue.textContent = zoom + '%';
+            this.settings.pageZoom = zoom;
+            this.updateCurrentInfo();
+            if (this.settings.autoSave) {
+                this.previewSettings();
+            }
+        });
+
+        // 开关设置
+        const switches = ['enableAnimations', 'compactMode', 'highContrast', 'autoSave', 'showTips', 'soundEffects'];
+        switches.forEach(switchId => {
+            const switchEl = document.getElementById(switchId);
+            if (switchEl) {
+                switchEl.addEventListener('change', (e) => {
+                    this.settings[switchId] = e.target.checked;
+                    if (this.settings.autoSave) {
+                        this.previewSettings();
+                    }
+                });
+            }
+        });
+
+        // 下拉选择
+        const selects = ['language', 'dateFormat', 'itemsPerPage'];
+        selects.forEach(selectId => {
+            const selectEl = document.getElementById(selectId);
+            if (selectEl) {
+                selectEl.addEventListener('change', (e) => {
+                    this.settings[selectId] = e.target.value;
+                    this.updateCurrentInfo();
+                    if (this.settings.autoSave) {
+                        this.previewSettings();
+                    }
+                });
+            }
+        });
+
+        // 按钮事件
+        document.getElementById('applySettings').addEventListener('click', () => this.applySettings());
+        document.getElementById('previewSettings').addEventListener('click', () => this.previewSettings());
+        document.getElementById('resetSettings').addEventListener('click', () => this.resetSettings());
+        document.getElementById('exportSettings').addEventListener('click', () => this.exportSettings());
+        document.getElementById('importSettings').addEventListener('click', () => this.showImportModal());
+        
+        // 导入相关事件
+        document.getElementById('confirmImport').addEventListener('click', () => this.confirmImport());
+        document.getElementById('settingsFile').addEventListener('change', (e) => this.handleFileImport(e));
+        document.getElementById('settingsText').addEventListener('input', (e) => this.handleTextImport(e));
+    }
+
+    loadSettings() {
+        const savedSettings = localStorage.getItem('systemSettings');
+        if (savedSettings) {
+            try {
+                const parsed = JSON.parse(savedSettings);
+                this.settings = { ...this.settings, ...parsed };
+                this.updateUI();
+                this.applyToSystem();
+            } catch (e) {
+                console.warn('Failed to load settings:', e);
+                this.showMessage('设置加载失败，使用默认设置', 'warning');
+            }
+        }
+    }
+
+    updateUI() {
+        // 更新字体设置UI
+        document.getElementById('fontSizeRange').value = this.settings.fontSize;
+        document.getElementById('fontSizeValue').textContent = this.settings.fontSize + 'px';
+        document.getElementById('fontSizePreview').style.fontSize = this.settings.fontSize + 'px';
+        
+        document.getElementById('fontFamilySelect').value = this.settings.fontFamily;
+        document.getElementById('fontFamilyPreview').style.fontFamily = this.settings.fontFamily;
+
+        // 更新主题UI
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(option => {
+            option.classList.toggle('active', option.dataset.theme === this.settings.theme);
+        });
+
+        // 更新自定义背景
+        document.getElementById('customBgColor').value = this.settings.customBackground;
+        document.getElementById('customBgInput').value = this.settings.customBackground;
+        document.getElementById('backgroundPreview').style.background = this.settings.customBackground;
+
+        // 更新页面缩放
+        document.getElementById('pageZoom').value = this.settings.pageZoom;
+        document.getElementById('zoomValue').textContent = this.settings.pageZoom + '%';
+
+        // 更新开关
+        const switches = ['enableAnimations', 'compactMode', 'highContrast', 'autoSave', 'showTips', 'soundEffects'];
+        switches.forEach(switchId => {
+            const switchEl = document.getElementById(switchId);
+            if (switchEl) {
+                switchEl.checked = this.settings[switchId];
+            }
+        });
+
+        // 更新下拉选择
+        const selects = ['language', 'dateFormat', 'itemsPerPage'];
+        selects.forEach(selectId => {
+            const selectEl = document.getElementById(selectId);
+            if (selectEl) {
+                selectEl.value = this.settings[selectId];
+            }
+        });
+
+        this.updateCurrentInfo();
+    }
+
+    updateCurrentInfo() {
+        document.getElementById('currentFontSize').textContent = this.settings.fontSize + 'px';
+        document.getElementById('currentFontFamily').textContent = this.fontFamilyNames[this.settings.fontFamily] || '未知字体';
+        document.getElementById('currentTheme').textContent = this.themeNames[this.settings.theme] || '自定义主题';
+        document.getElementById('currentZoom').textContent = this.settings.pageZoom + '%';
+        document.getElementById('currentLanguage').textContent = this.settings.language === 'zh-CN' ? '简体中文' : (this.settings.language === 'zh-TW' ? '繁体中文' : 'English');
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleString('zh-CN');
+    }
+
+    previewSettings() {
+        this.applyToSystem();
+        this.showMessage('预览效果已应用！', 'info');
+    }
+
+    applySettings() {
+        localStorage.setItem('systemSettings', JSON.stringify(this.settings));
+        this.applyToSystem();
+        this.updateCurrentInfo();
+        this.showMessage('设置已成功保存并应用！', 'success');
+    }
+
+    applyToSystem() {
+        // 应用字体大小
+        document.documentElement.style.fontSize = this.settings.fontSize + 'px';
+        
+        // 应用字体样式
+        document.body.style.fontFamily = this.settings.fontFamily;
+        
+        // 应用主题
+        this.applyTheme();
+        
+        // 应用页面缩放
+        document.body.style.zoom = this.settings.pageZoom + '%';
+        
+        // 应用其他设置
+        this.applyDisplaySettings();
+    }
+
+    applyTheme() {
+        // 清除所有主题类
+        const themeClasses = ['theme-default', 'theme-light', 'theme-dark', 'theme-blue', 'theme-green', 'theme-purple'];
+        themeClasses.forEach(cls => document.body.classList.remove(cls));
+        
+        if (this.settings.theme === 'custom') {
+            document.body.style.background = this.settings.customBackground;
+        } else {
+            document.body.classList.add('theme-' + this.settings.theme);
+            document.body.style.background = '';
+        }
+    }
+
+    applyDisplaySettings() {
+        // 动画效果
+        if (this.settings.enableAnimations) {
+            document.body.classList.remove('no-animations');
+        } else {
+            document.body.classList.add('no-animations');
+        }
+        
+        // 紧凑模式
+        if (this.settings.compactMode) {
+            document.body.classList.add('compact-mode');
+        } else {
+            document.body.classList.remove('compact-mode');
+        }
+        
+        // 高对比度模式
+        if (this.settings.highContrast) {
+            document.body.classList.add('high-contrast');
+        } else {
+            document.body.classList.remove('high-contrast');
+        }
+    }
+
+    resetSettings() {
+        if (confirm('确定要重置所有设置为默认值吗？此操作不可撤销。')) {
+            this.settings = {
+                fontSize: 14,
+                fontFamily: "'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                theme: 'default',
+                customBackground: '#f8f9fa',
+                pageZoom: 100,
+                enableAnimations: true,
+                compactMode: false,
+                highContrast: false,
+                language: 'zh-CN',
+                dateFormat: 'YYYY-MM-DD',
+                itemsPerPage: 10,
+                autoSave: true,
+                showTips: true,
+                soundEffects: false
+            };
+            
+            this.updateUI();
+            this.applyToSystem();
+            localStorage.removeItem('systemSettings');
+            this.showMessage('设置已重置为默认值！', 'info');
+        }
+    }
+
+    exportSettings() {
+        const settingsData = {
+            ...this.settings,
+            exportTime: new Date().toISOString(),
+            version: '1.0'
+        };
+        
+        const dataStr = JSON.stringify(settingsData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `system-settings-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        this.showMessage('设置已导出到下载文件夹！', 'success');
+    }
+
+    showImportModal() {
+        const modal = new bootstrap.Modal(document.getElementById('importModal'));
+        modal.show();
+    }
+
+    handleFileImport(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('settingsText').value = e.target.result;
+                this.handleTextImport({ target: { value: e.target.result } });
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    handleTextImport(event) {
+        const text = event.target.value.trim();
+        if (text) {
+            try {
+                const importedSettings = JSON.parse(text);
+                this.showImportPreview(importedSettings);
+            } catch (e) {
+                document.getElementById('importPreview').style.display = 'none';
+            }
+        } else {
+            document.getElementById('importPreview').style.display = 'none';
+        }
+    }
+
+    showImportPreview(settings) {
+        const preview = document.getElementById('importPreview');
+        const content = document.getElementById('importPreviewContent');
+        
+        content.innerHTML = `
+            <p><strong>字体大小:</strong> ${settings.fontSize || '未设置'}px</p>
+            <p><strong>主题:</strong> ${this.themeNames[settings.theme] || settings.theme || '未设置'}</p>
+            <p><strong>页面缩放:</strong> ${settings.pageZoom || '未设置'}%</p>
+            <p><strong>语言:</strong> ${settings.language || '未设置'}</p>
+            <p><strong>导出时间:</strong> ${settings.exportTime ? new Date(settings.exportTime).toLocaleString('zh-CN') : '未知'}</p>
+        `;
+        
+        preview.style.display = 'block';
+    }
+
+    confirmImport() {
+        const text = document.getElementById('settingsText').value.trim();
+        if (text) {
+            try {
+                const importedSettings = JSON.parse(text);
+                
+                // 合并设置，保留有效的设置项
+                const validSettings = {};
+                Object.keys(this.settings).forEach(key => {
+                    if (importedSettings.hasOwnProperty(key)) {
+                        validSettings[key] = importedSettings[key];
+                    }
+                });
+                
+                this.settings = { ...this.settings, ...validSettings };
+                this.updateUI();
+                this.applyToSystem();
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
+                modal.hide();
+                
+                this.showMessage('设置导入成功！', 'success');
+            } catch (e) {
+                this.showMessage('导入失败：设置格式无效', 'error');
+            }
+        }
+    }
+
+    showMessage(message, type = 'success') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.style.position = 'fixed';
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        alertDiv.style.minWidth = '300px';
+        
+        const iconMap = {
+            'success': 'check-circle',
+            'info': 'info-circle',
+            'warning': 'exclamation-triangle',
+            'error': 'times-circle'
+        };
+        
+        alertDiv.innerHTML = `
+            <i class="fas fa-${iconMap[type] || 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 4000);
+    }
+}
+
+// 快速操作函数
+function quickSetTheme(theme) {
+    window.settingsManager.settings.theme = theme;
+    window.settingsManager.updateUI();
+    window.settingsManager.previewSettings();
+}
+
+function quickSetFontSize(size) {
+    window.settingsManager.settings.fontSize = size;
+    window.settingsManager.updateUI();
+    window.settingsManager.previewSettings();
+}
+
+function resetToDefaults() {
+    window.settingsManager.resetSettings();
+}
+
+// 初始化设置管理器
+document.addEventListener('DOMContentLoaded', function() {
+    window.settingsManager = new SystemSettingsManager();
+});
+</script>
+{% endblock %}

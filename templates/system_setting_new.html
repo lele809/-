@@ -1,0 +1,447 @@
+{% extends "base_old.html" %}
+
+{% block title %}系统设置 - 租房管理系统{% endblock %}
+
+{% block page_title %}系统设置{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/system-settings.css') }}">
+{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i>仪表盘</a>
+                </li>
+                <li class="breadcrumb-item active">系统设置</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-cog me-2"></i>系统外观设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="systemSettingsForm">
+                            <!-- 字体设置区域 -->
+                            <div class="settings-section">
+                                <h6 class="section-title">
+                                    <i class="fas fa-font me-2"></i>字体设置
+                                </h6>
+
+                                <!-- 字体大小设置 -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="fontSize" class="form-label">字体大小</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="fontSize">
+                                                <option value="12px">小号 (12px)</option>
+                                                <option value="14px" selected>标准 (14px)</option>
+                                                <option value="16px">中号 (16px)</option>
+                                                <option value="18px">大号 (18px)</option>
+                                                <option value="20px">特大 (20px)</option>
+                                            </select>
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                    id="previewFontSize">
+                                                <i class="fas fa-eye"></i> 预览
+                                            </button>
+                                        </div>
+                                        <div class="form-text">调整整个系统的字体大小</div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">字体大小预览</label>
+                                        <div class="preview-box" id="fontSizePreview">
+                                            这是字体大小预览文本
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 字体样式设置 -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="fontFamily" class="form-label">字体样式</label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="fontFamily">
+                                                <option value="'Microsoft YaHei', sans-serif" selected>微软雅黑</option>
+                                                <option value="'SimHei', sans-serif">黑体</option>
+                                                <option value="'SimSun', serif">宋体</option>
+                                                <option value="'KaiTi', serif">楷体</option>
+                                                <option value="'Arial', sans-serif">Arial</option>
+                                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                                <option value="'Courier New', monospace">Courier New</option>
+                                            </select>
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                    id="previewFontFamily">
+                                                <i class="fas fa-eye"></i> 预览
+                                            </button>
+                                        </div>
+                                        <div class="form-text">选择系统使用的字体样式</div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">字体样式预览</label>
+                                        <div class="preview-box" id="fontFamilyPreview">
+                                            这是字体样式预览文本 - Font Style Preview
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 背景设置区域 -->
+                            <div class="settings-section">
+                                <h6 class="section-title">
+                                    <i class="fas fa-palette me-2"></i>背景设置
+                                </h6>
+
+                                <!-- 背景主题选择 -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <label class="form-label">背景主题</label>
+                                        <div class="theme-options">
+                                            <div class="theme-option" data-theme="default">
+                                                <div class="theme-preview default-theme"></div>
+                                                <span>默认主题</span>
+                                            </div>
+                                            <div class="theme-option" data-theme="light">
+                                                <div class="theme-preview light-theme"></div>
+                                                <span>浅色主题</span>
+                                            </div>
+                                            <div class="theme-option" data-theme="dark">
+                                                <div class="theme-preview dark-theme"></div>
+                                                <span>深色主题</span>
+                                            </div>
+                                            <div class="theme-option" data-theme="blue">
+                                                <div class="theme-preview blue-theme"></div>
+                                                <span>蓝色主题</span>
+                                            </div>
+                                            <div class="theme-option" data-theme="green">
+                                                <div class="theme-preview green-theme"></div>
+                                                <span>绿色主题</span>
+                                            </div>
+                                            <div class="theme-option" data-theme="purple">
+                                                <div class="theme-preview purple-theme"></div>
+                                                <span>紫色主题</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 自定义背景颜色 -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label for="customBgColor" class="form-label">自定义背景颜色</label>
+                                        <div class="input-group">
+                                            <input type="color" class="form-control form-control-color"
+                                                   id="customBgColor" value="#f8f9fa">
+                                            <input type="text" class="form-control" id="customBgColorText"
+                                                   value="#f8f9fa" placeholder="#ffffff">
+                                            <button class="btn btn-outline-secondary" type="button" id="previewBgColor">
+                                                <i class="fas fa-eye"></i> 预览
+                                            </button>
+                                        </div>
+                                        <div class="form-text">选择或输入自定义背景颜色</div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">背景颜色预览</label>
+                                        <div class="preview-box" id="bgColorPreview">
+                                            背景颜色预览区域
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 操作按钮 -->
+                            <div class="settings-actions">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-primary me-2" id="applySettings">
+                                            <i class="fas fa-check me-1"></i>应用设置
+                                        </button>
+                                        <button type="button" class="btn btn-success me-2" id="saveSettings">
+                                            <i class="fas fa-save me-1"></i>保存设置
+                                        </button>
+                                        <button type="button" class="btn btn-warning me-2" id="resetSettings">
+                                            <i class="fas fa-undo me-1"></i>重置默认
+                                        </button>
+                                        <button type="button" class="btn btn-info" id="previewAll">
+                                            <i class="fas fa-eye me-1"></i>预览所有更改
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 当前设置信息 -->
+                            <div class="current-settings mt-4">
+                                <h6 class="section-title">
+                                    <i class="fas fa-info-circle me-2"></i>当前设置信息
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="info-item">
+                                            <label>当前字体大小:</label>
+                                            <span id="currentFontSize">14px</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-item">
+                                            <label>当前字体样式:</label>
+                                            <span id="currentFontFamily">微软雅黑</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-item">
+                                            <label>当前背景主题:</label>
+                                            <span id="currentTheme">默认主题</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置预览模态框 -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">设置预览</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="previewContent">
+                    <div class="preview-demo">
+                        <h6>这是标题文本预览</h6>
+                        <p>这是正文内容预览，用于展示字体大小和样式的效果。</p>
+                        <div class="btn btn-primary">按钮预览</div>
+                        <div class="card mt-3">
+                            <div class="card-header">卡片标题</div>
+                            <div class="card-body">卡片内容预览</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="confirmPreview">确认应用</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 系统设置JavaScript功能
+        document.addEventListener('DOMContentLoaded', function () {
+            // 获取所有设置元素
+            const fontSizeSelect = document.getElementById('fontSize');
+            const fontFamilySelect = document.getElementById('fontFamily');
+            const customBgColor = document.getElementById('customBgColor');
+            const customBgColorText = document.getElementById('customBgColorText');
+            const themeOptions = document.querySelectorAll('.theme-option');
+
+            // 预览元素
+            const fontSizePreview = document.getElementById('fontSizePreview');
+            const fontFamilyPreview = document.getElementById('fontFamilyPreview');
+            const bgColorPreview = document.getElementById('bgColorPreview');
+
+            // 当前设置显示元素
+            const currentFontSize = document.getElementById('currentFontSize');
+            const currentFontFamily = document.getElementById('currentFontFamily');
+            const currentTheme = document.getElementById('currentTheme');
+
+            // 加载保存的设置
+            loadSavedSettings();
+
+            // 字体大小预览
+            document.getElementById('previewFontSize').addEventListener('click', function () {
+                const fontSize = fontSizeSelect.value;
+                fontSizePreview.style.fontSize = fontSize;
+                showToast('字体大小预览已更新');
+            });
+
+            // 字体样式预览
+            document.getElementById('previewFontFamily').addEventListener('click', function () {
+                const fontFamily = fontFamilySelect.value;
+                fontFamilyPreview.style.fontFamily = fontFamily;
+                showToast('字体样式预览已更新');
+            });
+
+            // 背景颜色预览
+            document.getElementById('previewBgColor').addEventListener('click', function () {
+                const bgColor = customBgColor.value;
+                bgColorPreview.style.backgroundColor = bgColor;
+                customBgColorText.value = bgColor;
+                showToast('背景颜色预览已更新');
+            });
+
+            // 颜色输入同步
+            customBgColor.addEventListener('change', function () {
+                customBgColorText.value = this.value;
+                bgColorPreview.style.backgroundColor = this.value;
+            });
+
+            customBgColorText.addEventListener('change', function () {
+                if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                    customBgColor.value = this.value;
+                    bgColorPreview.style.backgroundColor = this.value;
+                }
+            });
+
+            // 主题选择
+            themeOptions.forEach(option => {
+                option.addEventListener('click', function () {
+                    themeOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    const theme = this.dataset.theme;
+                    applyTheme(theme);
+                    currentTheme.textContent = this.querySelector('span').textContent;
+                });
+            });
+
+            // 应用设置
+            document.getElementById('applySettings').addEventListener('click', function () {
+                applyAllSettings();
+                showToast('设置已应用', 'success');
+            });
+
+            // 保存设置
+            document.getElementById('saveSettings').addEventListener('click', function () {
+                saveAllSettings();
+                showToast('设置已保存', 'success');
+            });
+
+            // 重置设置
+            document.getElementById('resetSettings').addEventListener('click', function () {
+                if (confirm('确定要重置为默认设置吗？')) {
+                    resetToDefault();
+                    showToast('已重置为默认设置', 'info');
+                }
+            });
+
+            // 预览所有更改
+            document.getElementById('previewAll').addEventListener('click', function () {
+                showPreviewModal();
+            });
+
+            // 应用所有设置
+            function applyAllSettings() {
+                const fontSize = fontSizeSelect.value;
+                const fontFamily = fontFamilySelect.value;
+                const bgColor = customBgColor.value;
+                const selectedTheme = document.querySelector('.theme-option.active');
+
+                // 应用到整个页面
+                document.body.style.fontSize = fontSize;
+                document.body.style.fontFamily = fontFamily;
+
+                if (selectedTheme) {
+                    applyTheme(selectedTheme.dataset.theme);
+                }
+
+                // 更新当前设置显示
+                currentFontSize.textContent = fontSize;
+                if (fontFamilySelect.selectedIndex >= 0 && fontFamilySelect.options[fontFamilySelect.selectedIndex]) {
+                    currentFontFamily.textContent = fontFamilySelect.options[fontFamilySelect.selectedIndex].text;
+                }
+            }
+
+            // 保存所有设置到localStorage
+            function saveAllSettings() {
+                const settings = {
+                    fontSize: fontSizeSelect.value,
+                    fontFamily: fontFamilySelect.value,
+                    bgColor: customBgColor.value,
+                    theme: document.querySelector('.theme-option.active')?.dataset.theme || 'default'
+                };
+
+                localStorage.setItem('systemSettings', JSON.stringify(settings));
+                applyAllSettings();
+            }
+
+            // 加载保存的设置
+            function loadSavedSettings() {
+                const saved = localStorage.getItem('systemSettings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+
+                    fontSizeSelect.value = settings.fontSize || '14px';
+                    fontFamilySelect.value = settings.fontFamily || "'Microsoft YaHei', sans-serif";
+                    customBgColor.value = settings.bgColor || '#f8f9fa';
+                    customBgColorText.value = settings.bgColor || '#f8f9fa';
+
+                    // 设置主题
+                    themeOptions.forEach(opt => opt.classList.remove('active'));
+                    const themeOption = document.querySelector(`[data-theme="${settings.theme || 'default'}"]`);
+                    if (themeOption) {
+                        themeOption.classList.add('active');
+                    }
+
+                    applyAllSettings();
+                }
+            }
+
+            // 重置为默认设置
+            function resetToDefault() {
+                fontSizeSelect.value = '14px';
+                fontFamilySelect.value = "'Microsoft YaHei', sans-serif";
+                customBgColor.value = '#f8f9fa';
+                customBgColorText.value = '#f8f9fa';
+
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                document.querySelector('[data-theme="default"]').classList.add('active');
+
+                localStorage.removeItem('systemSettings');
+                applyAllSettings();
+            }
+
+            // 应用主题
+            function applyTheme(theme) {
+                document.body.className = document.body.className.replace(/theme-\w+/g, '');
+                if (theme !== 'default') {
+                    document.body.classList.add(`theme-${theme}`);
+                }
+            }
+
+            // 显示预览模态框
+            function showPreviewModal() {
+                const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+                const previewContent = document.getElementById('previewContent');
+
+                // 应用当前设置到预览内容
+                previewContent.style.fontSize = fontSizeSelect.value;
+                previewContent.style.fontFamily = fontFamilySelect.value;
+                previewContent.style.backgroundColor = customBgColor.value;
+
+                modal.show();
+            }
+
+            // 显示提示消息
+            function showToast(message, type = 'info') {
+                // 创建简单的提示消息
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type} position-fixed`;
+                toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                toast.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'info' ? 'info' : 'exclamation'}-circle me-2"></i>
+            ${message}
+        `;
+
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+        });
+    </script>
+{% endblock %}

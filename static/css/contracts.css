@@ -1,0 +1,421 @@
+/* 合同管理页面样式 */
+
+/* 统计卡片样式 */
+.contract-stats-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    position: relative;
+}
+
+.contract-stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    z-index: 1;
+}
+
+.contract-stats-card .card-body {
+    position: relative;
+    z-index: 2;
+    padding: 1.5rem;
+}
+
+.contract-stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.contract-stats-card .card-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.contract-stats-card .card-text {
+    font-size: 1rem;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.contract-stats-card i {
+    opacity: 0.8;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* 合同表格样式 */
+.contract-row {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.contract-row:hover {
+    background-color: #f8f9fa !important;
+    border-left-color: var(--primary-color, #007bff);
+    transform: translateX(2px);
+}
+
+.contract-number {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+}
+
+.room-badge {
+    font-weight: 600;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.tenant-info strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.tenant-info small {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.rent-amount {
+    font-family: 'Arial', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.contract-period {
+    line-height: 1.3;
+}
+
+.contract-status {
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.expiry-reminder {
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.expiry-reminder small {
+    font-weight: 500;
+}
+
+/* 空状态样式 */
+.empty-state {
+    padding: 3rem 2rem;
+}
+
+.empty-state i {
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.empty-state h5 {
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: #adb5bd;
+    font-size: 0.95rem;
+}
+
+/* 模态框样式增强 */
+.modal-xl {
+    max-width: 1200px;
+}
+
+.modal-header {
+    border-bottom: none;
+    padding: 1.5rem 2rem 1rem;
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-body {
+    padding: 1rem 2rem 2rem;
+}
+
+.modal-footer {
+    border-top: none;
+    padding: 1rem 2rem 1.5rem;
+    border-radius: 0 0 15px 15px;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+/* 表单卡片样式 */
+.modal-body .card {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.modal-body .card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.modal-body .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 10px 10px 0 0;
+    padding: 0.75rem 1rem;
+}
+
+.modal-body .card-header h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-body .card-body {
+    padding: 1.25rem;
+}
+
+/* 表单控件样式 */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color, #007bff);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.form-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* 按钮组样式 */
+.btn-group-sm .btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    margin: 0 1px;
+    transition: all 0.3s ease;
+}
+
+.btn-group-sm .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 搜索和筛选区域样式 */
+.input-group .input-group-text {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #e9ecef;
+    border-right: none;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.input-group .form-control {
+    border-left: none;
+}
+
+.input-group .form-control:focus {
+    border-left: none;
+    box-shadow: none;
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: var(--primary-color, #007bff);
+    color: var(--primary-color, #007bff);
+}
+
+/* 面包屑导航样式 */
+.breadcrumb-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.breadcrumb {
+    margin: 0;
+    background: none;
+    padding: 0;
+}
+
+.breadcrumb-item a {
+    color: var(--primary-color, #007bff);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #0056b3;
+    transform: translateX(2px);
+}
+
+.breadcrumb-item.active {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+/* 警告和信息框样式 */
+.alert {
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    color: #0c5460;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .contract-stats-card .card-title {
+        font-size: 2rem;
+    }
+
+    .modal-xl {
+        max-width: 95%;
+        margin: 1rem auto;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .btn-group-sm {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .btn-group-sm .btn {
+        margin: 0;
+        border-radius: 6px;
+    }
+
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+
+    .contract-period {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .contract-stats-card .card-title {
+        font-size: 1.8rem;
+    }
+
+    .contract-stats-card .card-text {
+        font-size: 0.9rem;
+    }
+
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .modal-body {
+        padding: 0.5rem;
+    }
+
+    .modal-footer {
+        padding: 1rem;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contract-stats-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.contract-stats-card:nth-child(1) { animation-delay: 0.1s; }
+.contract-stats-card:nth-child(2) { animation-delay: 0.2s; }
+.contract-stats-card:nth-child(3) { animation-delay: 0.3s; }
+.contract-stats-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* 打印样式 */
+@media print {
+    .modal-header,
+    .modal-footer,
+    .btn,
+    .breadcrumb-container {
+        display: none !important;
+    }
+
+    .modal-body {
+        padding: 0;
+    }
+
+    .card {
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+
+    .table {
+        font-size: 12px;
+    }
+}

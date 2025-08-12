@@ -1,0 +1,839 @@
+{% extends "base_old.html" %}
+
+{% block title %}五楼管理 - 收费记录 - 租房管理系统{% endblock %}
+
+{% block page_title %}五楼管理 - 收费记录{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index5') }}"><i class="fas fa-home"></i> 主页</a></li>
+                <li class="breadcrumb-item active">收费记录</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/record.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- 页面标题 -->
+    <div class="records-header-enhanced" data-aos="fade-down">
+        <div class="header-content">
+            <div class="header-icon-wrapper">
+                <i class="fas fa-receipt header-main-icon"></i>
+            </div>
+            <div class="header-text">
+                <h1 class="header-title">
+                    <span class="title-gradient">收费记录管理</span>
+                    <div class="title-underline"></div>
+                </h1>
+                <p class="header-subtitle">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    五楼所有房间的缴费记录和收入统计
+                </p>
+            </div>
+        </div>
+        <div class="header-decoration">
+            <div class="decoration-circle circle-1"></div>
+            <div class="decoration-circle circle-2"></div>
+            <div class="decoration-circle circle-3"></div>
+        </div>
+    </div>
+
+    <!-- 统计概览 -->
+    <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card-enhanced" data-aos="zoom-in" data-aos-delay="200">
+                <div class="stats-value">{{ rental_records_list|length }}</div>
+                <div class="stats-label">总缴费记录</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card-enhanced" data-aos="zoom-in" data-aos-delay="300">
+                <div class="stats-value">
+                    ¥{{ "%.0f"|format(rental_records_list|sum(attribute='total_rent')|float) }}</div>
+                <div class="stats-label">总收费金额</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card-enhanced" data-aos="zoom-in" data-aos-delay="400">
+                <div class="stats-value">{{ rental_records_list|map(attribute='room_number')|unique|list|length }}</div>
+                <div class="stats-label">涉及房间数</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card-enhanced" data-aos="zoom-in" data-aos-delay="500">
+                <div class="stats-value">
+                    ¥{{ "%.0f"|format((rental_records_list|sum(attribute='total_rent')|float / rental_records_list|length) if rental_records_list|length > 0 else 0) }}</div>
+                <div class="stats-label">平均缴费金额</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选区域 -->
+    <div class="search-filter-section" data-aos="fade-up" data-aos-delay="200">
+        <div class="search-filter-header">
+            <h3 class="search-filter-title">
+                <i class="fas fa-search me-2"></i>
+                搜索与筛选
+            </h3>
+            <p class="search-filter-subtitle">快速查找特定的缴费记录</p>
+        </div>
+
+        <div class="search-filter-controls">
+            <div class="row align-items-end mb-3">
+                <!-- 房号搜索 -->
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <label class="form-label search-label">
+                        <i class="fas fa-door-closed me-1"></i>
+                        房号搜索
+                    </label>
+                    <div class="search-input-wrapper">
+                        <div class="search-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <input type="text" class="form-control search-input"
+                               placeholder="输入房号搜索..."
+                               id="roomSearchInput">
+                        <div class="search-clear" id="roomSearchClear" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 租客搜索 -->
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <label class="form-label search-label">
+                        <i class="fas fa-user me-1"></i>
+                        租客搜索
+                    </label>
+                    <div class="search-input-wrapper">
+                        <div class="search-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <input type="text" class="form-control search-input"
+                               placeholder="输入租客姓名搜索..."
+                               id="tenantSearchInput">
+                        <div class="search-clear" id="tenantSearchClear" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="col-lg-4 col-md-12 mb-3">
+                    <div class="action-buttons">
+                        <button class="btn btn-clear" onclick="clearAllFilters()">
+                            <i class="fas fa-eraser me-2"></i>
+                            清除筛选
+                        </button>
+                        <button class="btn btn-export" onclick="exportRecords()">
+                            <i class="fas fa-file-excel me-2"></i>
+                            导出记录
+                        </button>
+                        <button class="btn btn-danger" id="batchDeleteBtn" onclick="batchDeleteRecords()"
+                                style="display: none;">
+                            <i class="fas fa-trash me-2"></i>
+                            批量删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期筛选 -->
+            <div class="date-filter-section">
+                <div class="row align-items-end">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <label class="form-label search-label">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            查询日期
+                        </label>
+                        <input type="date" class="form-control date-input" id="queryDate">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筛选结果显示 -->
+            <div class="filter-result">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="result-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            显示 <strong id="filteredCount">{{ rental_records_list|length }}</strong> 条记录，
+                            共 <strong>{{ rental_records_list|length }}</strong> 条记录
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="filter-tags" id="filterTags"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 缴费记录表格 -->
+    <div class="table-enhanced" data-aos="fade-up" data-aos-delay="300">
+        {% if rental_records_list %}
+            <div class="table-header-enhanced">
+                <h3 class="table-title-enhanced">
+                    <i class="fas fa-list me-2"></i>
+                    缴费记录详览 (共 {{ rental_records_list|length }} 条记录)
+                </h3>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            <label for="selectAll" class="ms-2">全选</label>
+                        </th>
+                        <th>序号</th>
+                        <th>房间号</th>
+                        <th>租客姓名</th>
+                        <th>缴费金额</th>
+                        <th>缴费日期</th>
+                        <th>记录时间</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for record in rental_records_list %}
+                        <tr class="record-row"
+                            data-room="{{ record.room_number }}"
+                            data-tenant="{{ record.tenant_name }}"
+                            data-payment-date="{{ record.payment_date.strftime('%Y-%m-%d') if record.payment_date else '' }}"
+                            data-created-date="{{ record.created_at.strftime('%Y-%m-%d') if record.created_at else '' }}"
+                            data-record-id="{{ record.id }}"
+                            data-aos="fade-up" data-aos-delay="{{ 400 + loop.index0 * 50 }}">
+                            <td>
+                                <input type="checkbox" class="record-checkbox" value="{{ record.id }}"
+                                       onchange="updateBatchDeleteButton()">
+                            </td>
+                            <td><strong class="row-index">{{ loop.index }}</strong></td>
+                            <td>
+                                <div class="room-badge-enhanced">
+                                    <i class="fas fa-door-closed"></i>
+                                    {{ record.room_number }}
+                                </div>
+                            </td>
+                            <td>
+                                <i class="fas fa-user me-2"></i>
+                                {{ record.tenant_name }}
+                            </td>
+                            <td>
+                                <div class="amount-enhanced">
+                                    <i class="fas fa-money-bill-wave me-1"></i>
+                                    ¥{{ "%.2f"|format(record.total_rent|float) }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if record.payment_date %}
+                                    <div class="date-enhanced">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        {{ record.payment_date.strftime('%Y-%m-%d') }}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-calendar-times me-1"></i>
+                                        未设置
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if record.created_at %}
+                                    <div class="date-enhanced">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ record.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">未知</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页导航 -->
+            <div class="pagination-container" id="paginationContainer">
+                <nav aria-label="分页导航">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- 分页按钮将通过JavaScript动态生成 -->
+                    </ul>
+                </nav>
+                <div class="pagination-info text-center mt-3">
+                    <span id="paginationInfo">显示第 1-10 条，共 {{ rental_records_list|length }} 条记录</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state" data-aos="fade-up" data-aos-delay="300">
+                <div class="empty-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <h3>暂无缴费记录</h3>
+                <p>还没有任何缴费记录，开始添加第一条缴费记录吧！</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- AOS动画库 -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // 初始化AOS动画
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100
+        });
+
+        // 数字动画效果
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(() => {
+                const numberElements = document.querySelectorAll('.stats-value');
+                numberElements.forEach(element => {
+                    const text = element.textContent;
+                    const number = parseFloat(text.replace(/[^0-9.]/g, ''));
+                    if (!isNaN(number) && number > 0) {
+                        let current = 0;
+                        const increment = number / 50;
+                        const timer = setInterval(() => {
+                            current += increment;
+                            if (current >= number) {
+                                current = number;
+                                clearInterval(timer);
+                            }
+                            if (text.includes('¥')) {
+                                element.textContent = '¥' + Math.floor(current);
+                            } else {
+                                element.textContent = Math.floor(current);
+                            }
+                        }, 30);
+                    }
+                });
+            }, 500);
+
+            // 初始化搜索和筛选功能
+            initSearchAndFilter();
+        });
+
+        // 分页相关变量
+        let currentPage = 1;
+        let recordsPerPage = 10;
+        let filteredRecords = [];
+        let allRecords = [];
+
+        // 搜索和筛选功能
+        function initSearchAndFilter() {
+            const roomSearchInput = document.getElementById('roomSearchInput');
+            const tenantSearchInput = document.getElementById('tenantSearchInput');
+            const roomSearchClear = document.getElementById('roomSearchClear');
+            const tenantSearchClear = document.getElementById('tenantSearchClear');
+            const queryDate = document.getElementById('queryDate');
+
+            // 初始化记录数组
+            allRecords = Array.from(document.querySelectorAll('.record-row'));
+            filteredRecords = [...allRecords];
+
+            // 初始化分页
+            initPagination();
+
+            // 房号搜索
+            if (roomSearchInput && roomSearchClear) {
+                roomSearchInput.addEventListener('input', function () {
+                    const value = this.value.trim();
+                    roomSearchClear.style.display = value ? 'block' : 'none';
+                    applyFilters();
+                });
+
+                roomSearchClear.addEventListener('click', function () {
+                    roomSearchInput.value = '';
+                    this.style.display = 'none';
+                    applyFilters();
+                    roomSearchInput.focus();
+                });
+            }
+
+            // 租客搜索
+            if (tenantSearchInput && tenantSearchClear) {
+                tenantSearchInput.addEventListener('input', function () {
+                    const value = this.value.trim();
+                    tenantSearchClear.style.display = value ? 'block' : 'none';
+                    applyFilters();
+                });
+
+                tenantSearchClear.addEventListener('click', function () {
+                    tenantSearchInput.value = '';
+                    this.style.display = 'none';
+                    applyFilters();
+                    tenantSearchInput.focus();
+                });
+            }
+
+            // 日期筛选
+            if (queryDate) {
+                queryDate.addEventListener('change', applyFilters);
+            }
+
+            // 键盘快捷键
+            document.addEventListener('keydown', function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                    e.preventDefault();
+                    roomSearchInput.focus();
+                    roomSearchInput.select();
+                }
+                if (e.key === 'Escape') {
+                    clearAllFilters();
+                }
+            });
+
+            console.log('💡 快捷键提示: Ctrl+F聚焦搜索, ESC清除所有筛选');
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            const roomSearch = document.getElementById('roomSearchInput').value.toLowerCase().trim();
+            const tenantSearch = document.getElementById('tenantSearchInput').value.toLowerCase().trim();
+            const queryDate = document.getElementById('queryDate').value;
+
+            // 筛选记录
+            filteredRecords = allRecords.filter(row => {
+                const roomNumber = row.getAttribute('data-room').toLowerCase();
+                const tenantName = row.getAttribute('data-tenant').toLowerCase();
+                const paymentDate = row.getAttribute('data-payment-date');
+                const createdDate = row.getAttribute('data-created-date');
+
+                // 房号搜索
+                if (roomSearch && !roomNumber.includes(roomSearch)) {
+                    return false;
+                }
+
+                // 租客搜索
+                if (tenantSearch && !tenantName.includes(tenantSearch)) {
+                    return false;
+                }
+
+                // 日期筛选（同时匹配缴费日期和记录日期）
+                if (queryDate) {
+                    const matchPaymentDate = paymentDate && paymentDate === queryDate;
+                    const matchCreatedDate = createdDate && createdDate === queryDate;
+                    if (!matchPaymentDate && !matchCreatedDate) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // 重置到第一页
+            currentPage = 1;
+
+            // 更新分页和显示
+            updatePagination();
+            displayCurrentPage();
+
+            // 更新计数
+            updateFilteredCount(filteredRecords.length);
+
+            // 更新筛选标签
+            updateFilterTags();
+        }
+
+        // 更新筛选计数
+        function updateFilteredCount(count) {
+            const filteredCountElement = document.getElementById('filteredCount');
+            if (filteredCountElement) {
+                filteredCountElement.textContent = count;
+
+                // 添加动画效果
+                filteredCountElement.style.transform = 'scale(1.1)';
+                filteredCountElement.style.color = '#667eea';
+                setTimeout(() => {
+                    filteredCountElement.style.transform = 'scale(1)';
+                    filteredCountElement.style.color = '';
+                }, 200);
+            }
+        }
+
+        // 更新筛选标签
+        function updateFilterTags() {
+            const filterTags = document.getElementById('filterTags');
+            if (!filterTags) return;
+
+            const roomSearch = document.getElementById('roomSearchInput').value.trim();
+            const tenantSearch = document.getElementById('tenantSearchInput').value.trim();
+            const queryDate = document.getElementById('queryDate').value;
+
+            let tags = [];
+
+            if (roomSearch) {
+                tags.push({type: 'room', label: `房号: ${roomSearch}`, value: roomSearch});
+            }
+            if (tenantSearch) {
+                tags.push({type: 'tenant', label: `租客: ${tenantSearch}`, value: tenantSearch});
+            }
+            if (queryDate) {
+                tags.push({type: 'queryDate', label: `查询日期: ${queryDate}`, value: queryDate});
+            }
+
+            filterTags.innerHTML = tags.map(tag => `
+                <span class="filter-tag">
+                    ${tag.label}
+                    <span class="remove-tag" onclick="removeFilterTag('${tag.type}')">
+                        <i class="fas fa-times"></i>
+                    </span>
+                </span>
+            `).join('');
+        }
+
+        // 移除筛选标签
+        function removeFilterTag(type) {
+            switch (type) {
+                case 'room':
+                    document.getElementById('roomSearchInput').value = '';
+                    document.getElementById('roomSearchClear').style.display = 'none';
+                    break;
+                case 'tenant':
+                    document.getElementById('tenantSearchInput').value = '';
+                    document.getElementById('tenantSearchClear').style.display = 'none';
+                    break;
+                case 'queryDate':
+                    document.getElementById('queryDate').value = '';
+                    break;
+            }
+            applyFilters();
+        }
+
+        // 分页功能
+        function initPagination() {
+            updatePagination();
+            displayCurrentPage();
+        }
+
+        function updatePagination() {
+            const totalRecords = filteredRecords.length;
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            const pagination = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            // 上一页按钮
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `;
+
+            // 页码按钮
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1)">1</a></li>`;
+                if (startPage > 2) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages})">${totalPages}</a></li>`;
+            }
+
+            // 下一页按钮
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+
+            pagination.innerHTML = paginationHTML;
+            updatePaginationInfo();
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+            if (page < 1 || page > totalPages) return;
+
+            currentPage = page;
+            updatePagination();
+            displayCurrentPage();
+        }
+
+        function displayCurrentPage() {
+            // 隐藏所有记录
+            allRecords.forEach(row => {
+                row.style.display = 'none';
+                row.classList.add('hidden');
+            });
+
+            // 计算当前页的记录范围
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = startIndex + recordsPerPage;
+            const currentPageRecords = filteredRecords.slice(startIndex, endIndex);
+
+            // 显示当前页的记录并更新序号
+            currentPageRecords.forEach((row, index) => {
+                row.style.display = '';
+                row.classList.remove('hidden');
+
+                // 更新序号
+                const indexCell = row.querySelector('.row-index');
+                if (indexCell) {
+                    indexCell.textContent = startIndex + index + 1;
+                }
+            });
+        }
+
+        function updatePaginationInfo() {
+            const totalRecords = filteredRecords.length;
+            const startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * recordsPerPage + 1;
+            const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
+
+            const paginationInfo = document.getElementById('paginationInfo');
+            if (paginationInfo) {
+                paginationInfo.textContent = `显示第 ${startRecord}-${endRecord} 条，共 ${totalRecords} 条记录`;
+            }
+        }
+
+        // 清除所有筛选
+        function clearAllFilters() {
+            document.getElementById('roomSearchInput').value = '';
+            document.getElementById('tenantSearchInput').value = '';
+            document.getElementById('queryDate').value = '';
+
+            document.getElementById('roomSearchClear').style.display = 'none';
+            document.getElementById('tenantSearchClear').style.display = 'none';
+
+            applyFilters();
+
+            // 显示清除成功提示
+            showNotification('已清除所有筛选条件', 'success');
+        }
+
+        // 导出记录
+        function exportRecords() {
+            // 获取可见的记录
+            const visibleRows = document.querySelectorAll('.record-row:not(.hidden)');
+            const data = [];
+
+            // 表头
+            data.push(['序号', '房间号', '租客姓名', '缴费金额', '缴费日期', '记录时间']);
+
+            // 数据行
+            visibleRows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                const rowData = [
+                    index + 1,
+                    row.getAttribute('data-room'),
+                    row.getAttribute('data-tenant'),
+                    cells[3].textContent.trim(),
+                    row.getAttribute('data-payment-date') || '未设置',
+                    row.getAttribute('data-created-date') || '未知'
+                ];
+                data.push(rowData);
+            });
+
+            // 转换为CSV
+            const csvContent = data.map(row =>
+                row.map(cell => `"${cell}"`).join(',')
+            ).join('\n');
+
+            // 下载文件
+            const blob = new Blob(['\uFEFF' + csvContent], {type: 'text/csv;charset=utf-8;'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `缴费记录_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+
+            showNotification(`已导出 ${visibleRows.length} 条记录`, 'success');
+        }
+
+        // 批量删除功能
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.record-checkbox:not([style*="display: none"])');
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.closest('.record-row').style.display !== 'none') {
+                    checkbox.checked = selectAll.checked;
+                }
+            });
+
+            updateBatchDeleteButton();
+        }
+
+        function updateBatchDeleteButton() {
+            const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+            const visibleCheckedBoxes = Array.from(checkboxes).filter(cb =>
+                cb.closest('.record-row').style.display !== 'none'
+            );
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            const selectAll = document.getElementById('selectAll');
+
+            if (visibleCheckedBoxes.length > 0) {
+                batchDeleteBtn.style.display = 'inline-block';
+                batchDeleteBtn.innerHTML = `
+                    <i class="fas fa-trash me-2"></i>
+                    批量删除 (${visibleCheckedBoxes.length})
+                `;
+            } else {
+                batchDeleteBtn.style.display = 'none';
+            }
+
+            // 更新全选状态
+            const visibleCheckboxes = document.querySelectorAll('.record-checkbox');
+            const visibleCheckboxesArray = Array.from(visibleCheckboxes).filter(cb =>
+                cb.closest('.record-row').style.display !== 'none'
+            );
+            const checkedVisibleBoxes = visibleCheckboxesArray.filter(cb => cb.checked);
+
+            if (visibleCheckboxesArray.length === 0) {
+                selectAll.indeterminate = false;
+                selectAll.checked = false;
+            } else if (checkedVisibleBoxes.length === visibleCheckboxesArray.length) {
+                selectAll.indeterminate = false;
+                selectAll.checked = true;
+            } else if (checkedVisibleBoxes.length > 0) {
+                selectAll.indeterminate = true;
+                selectAll.checked = false;
+            } else {
+                selectAll.indeterminate = false;
+                selectAll.checked = false;
+            }
+        }
+
+        function batchDeleteRecords() {
+            const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+            const selectedIds = Array.from(checkboxes)
+                .filter(cb => cb.closest('.record-row').style.display !== 'none')
+                .map(cb => cb.value);
+
+            if (selectedIds.length === 0) {
+                showNotification('请选择要删除的记录', 'warning');
+                return;
+            }
+
+            if (confirm(`确定要删除选中的 ${selectedIds.length} 条记录吗？此操作不可撤销！`)) {
+                // 这里应该发送AJAX请求到后端删除记录
+                // 由于这是前端演示，我们只是从DOM中移除这些记录
+                selectedIds.forEach(id => {
+                    const row = document.querySelector(`[data-record-id="${id}"]`);
+                    if (row) {
+                        // 从allRecords数组中移除
+                        const index = allRecords.indexOf(row);
+                        if (index > -1) {
+                            allRecords.splice(index, 1);
+                        }
+                        // 从DOM中移除
+                        row.remove();
+                    }
+                });
+
+                // 重新应用筛选和分页
+                applyFilters();
+
+                // 重置选择状态
+                document.getElementById('selectAll').checked = false;
+                updateBatchDeleteButton();
+
+                showNotification(`已成功删除 ${selectedIds.length} 条记录`, 'success');
+
+                // 注意：在实际应用中，这里应该发送AJAX请求到后端
+                // fetch('/delete_records', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //     },
+                //     body: JSON.stringify({ids: selectedIds})
+                // }).then(response => {
+                //     if (response.ok) {
+                //         // 删除成功后的处理
+                //     }
+                // });
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+
+            let icon = 'info-circle';
+            let background = 'linear-gradient(135deg, #17a2b8, #138496)';
+
+            switch (type) {
+                case 'success':
+                    icon = 'check-circle';
+                    background = 'linear-gradient(135deg, #28a745, #20c997)';
+                    break;
+                case 'warning':
+                    icon = 'exclamation-triangle';
+                    background = 'linear-gradient(135deg, #ffc107, #e0a800)';
+                    break;
+                case 'error':
+                    icon = 'times-circle';
+                    background = 'linear-gradient(135deg, #dc3545, #c82333)';
+                    break;
+            }
+
+            notification.innerHTML = `
+                <i class="fas fa-${icon} me-2"></i>
+                ${message}
+            `;
+
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${background};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 15px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                z-index: 9999;
+                font-weight: 600;
+                animation: slideInRight 0.3s ease;
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease forwards';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+{% endblock %}

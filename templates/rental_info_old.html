@@ -1,0 +1,1398 @@
+{% extends "base_old.html" %}
+
+{% block title %}五楼管理 - 租房信息 - 租房管理系统{% endblock %}
+
+{% block page_title %}五楼管理 - 租房信息{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index5') }}"><i class="fas fa-home"></i> 主页</a></li>
+                <li class="breadcrumb-item active">租房信息</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rental.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/info.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- 全局加载动画覆盖层 -->
+    <div class="loading-overlay" id="globalLoadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p>加载中，请稍候...</p>
+        </div>
+    </div>
+
+    <!-- 页面头部 -->
+    <div class="rental-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2><i class="fas fa-info-circle me-3"></i> 租房信息</h2>
+                <p><i class="fas fa-info-circle me-2"></i>查看五楼所有房间的租赁详细信息</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>{{ moment().format('YYYY年MM月DD日') if moment else '今日' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        <span class="current-time" id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="row stats-row animate-fade-in">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card animate-scale-in" style="animation-delay: 0.1s;">
+                <div class="stats-icon total">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ rental_info_list|length }}</h3>
+                    <p>总租房数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card animate-scale-in" style="animation-delay: 0.2s;">
+                <div class="stats-icon paid">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ rental_info_list|selectattr('rental_status', 'equalto', 1)|list|length }}</h3>
+                    <p>已缴费</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card animate-scale-in" style="animation-delay: 0.3s;">
+                <div class="stats-icon unpaid">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>{{ rental_info_list|selectattr('rental_status', 'equalto', 2)|list|length }}</h3>
+                    <p>未缴费</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card animate-scale-in" style="animation-delay: 0.4s;">
+                <div class="stats-icon deposit">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stats-content">
+                    <h3>¥{{ "%.2f"|format(rental_info_list|sum(attribute='deposit')|float) }}</h3>
+                    <p>总押金</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="row mb-4 animate-slide-up">
+        <div class="col-lg-6 col-md-12 mb-3 mb-lg-0">
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="搜索房号、租客姓名或电话..."
+                           class="form-control search-input">
+                    <button class="btn btn-clear" id="clearSearch" title="清除搜索">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="search-suggestions" id="searchSuggestions" style="display: none;">
+                    <!-- 搜索建议将通过JavaScript动态添加 -->
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 col-md-12">
+            <div class="action-buttons d-flex flex-wrap gap-2 justify-content-end">
+                <div class="btn-group" role="group">
+                    <button class="btn export-btn" onclick="exportRentalInfo('all')" title="导出所有租房信息">
+                        <i class="fas fa-file-excel me-1"></i> 导出信息
+                    </button>
+                    <button type="button" class="btn export-btn dropdown-toggle dropdown-toggle-split"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">更多选项</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="exportRentalInfo('paid')">
+                            <i class="fas fa-check text-success me-2"></i> 导出已缴费信息</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportRentalInfo('unpaid')">
+                            <i class="fas fa-times text-danger me-2"></i> 导出未缴费信息</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="#" onclick="showRentalInfoSummary()">
+                            <i class="fas fa-chart-bar text-primary me-2"></i> 租房信息汇总</a></li>
+                    </ul>
+                </div>
+                <button class="btn add-rental-btn" onclick="addRentalInfo()">
+                    <i class="fas fa-plus me-1"></i> 添加租房信息
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选按钮 -->
+    <div class="filter-buttons mt-3 animate-fade-in">
+        <button class="btn filter-btn active" data-filter="all">
+            <i class="fas fa-list"></i> 全部
+        </button>
+        <button class="btn filter-btn" data-filter="paid">
+            <i class="fas fa-check-circle"></i> 已缴费
+        </button>
+        <button class="btn filter-btn" data-filter="unpaid">
+            <i class="fas fa-exclamation-circle"></i> 未缴费
+        </button>
+    </div>
+
+    <!-- 租房信息表格 -->
+    <div class="table-responsive rental-info-table animate-fade-in" style="animation-delay: 0.3s;">
+        <table class="table table-hover table-striped">
+            <thead>
+            <tr>
+                <th>房号</th>
+                <th>租客姓名</th>
+                <th>电话</th>
+                <th>押金</th>
+                <th>入住人数</th>
+                <th>入住时间</th>
+                <th>缴费状态</th>
+                <th>备注</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for info in rental_info_list %}
+                <tr data-rental-info-id="{{ info.id }}"
+                    class="rental-info-row {% if info.rental_status == 2 %}unpaid-row{% endif %}">
+                    <td>
+                        <span class="room-badge">
+                            <i class="fas fa-home me-1"></i> {{ info.room_number }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="tenant-info">
+                            <i class="fas fa-user me-2"></i>
+                            <span class="tenant-name">{{ info.tenant_name }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="phone-info">
+                            <i class="fas fa-phone me-2 text-muted"></i>
+                            <span>{{ info.phone }}</span>
+                        </div>
+                    </td>
+                    <td class="money-amount amount-positive">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-money-bill me-2 text-muted"></i>
+                            <span>¥{{ "%.2f"|format(info.deposit|float) }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-users me-2 text-muted"></i>
+                            <span>{{ info.occupant_count }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if info.check_in_date %}
+                            <span class="date-info">{{ info.check_in_date.strftime('%Y-%m-%d') }}</span>
+                        {% else %}
+                            <span class="text-muted">未入住</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if info.rental_status == 1 %}
+                            <span class="payment-status status-paid">
+                                <i class="fas fa-check-circle"></i> 已缴费
+                            </span>
+                        {% else %}
+                            <span class="payment-status status-unpaid">
+                                <i class="fas fa-exclamation-circle"></i> 未缴费
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if info.remarks %}
+                            <span class="remarks-text" title="{{ info.remarks }}">{{ info.remarks }}</span>
+                        {% else %}
+                            <span class="text-muted">无</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-action btn-view" onclick="viewRentalInfo({{ info.id }})"
+                                    title="查看详情">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-action btn-edit" onclick="editRentalInfo({{ info.id }})"
+                                    title="编辑信息">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-action btn-delete" onclick="deleteRentalInfo({{ info.id }})"
+                                    title="删除信息">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <div class="empty-state animate-fade-in">
+                            <i class="fas fa-info-circle fa-3x mb-3"></i>
+                            <h5>暂无租房信息</h5>
+                            <p class="text-muted">点击"添加租房信息"按钮创建新的租房信息记录</p>
+                            <button class="btn btn-primary mt-2" onclick="addRentalInfo()">
+                                <i class="fas fa-plus me-1"></i> 添加租房信息
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 添加/编辑租房信息模态框 -->
+    <div class="modal fade animate-modal" id="rentalInfoModal" tabindex="-1" aria-labelledby="rentalInfoModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content animate-scale-in">
+                <div class="modal-header bg-gradient-primary text-white">
+                    <h5 class="modal-title" id="rentalInfoModalLabel">
+                        <i class="fas fa-home me-2"></i>
+                        <span id="rentalModalTitle">添加租房信息</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rentalInfoForm" class="needs-validation" novalidate>
+                        <input type="hidden" id="rentalInfoId" name="id">
+
+                        <!-- 基本信息卡片 -->
+                        <div class="form-section-card">
+                            <div class="section-header">
+                                <i class="fas fa-info-circle"></i>
+                                <h6>基本信息</h6>
+                            </div>
+                            <div class="section-content">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="roomNumber" class="form-label">
+                                            <i class="fas fa-door-open text-primary me-2"></i>房号
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-home text-primary"></i>
+                                            </span>
+                                            <select class="form-select form-select-lg" id="roomNumber" name="roomNumber"
+                                                    required>
+                                                <option value="">请选择空闲房间</option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>请选择房号
+                                            </div>
+                                        </div>
+                                        <div class="form-text text-muted mt-2">
+                                            <i class="fas fa-info-circle me-1"></i>仅显示空闲状态的房间
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="tenantName" class="form-label">
+                                            <i class="fas fa-user text-primary me-2"></i>租客姓名
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-user text-primary"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="tenantName" name="tenantName"
+                                                   placeholder="请输入租客姓名" required>
+                                            <div class="invalid-feedback">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>请输入租客姓名
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 联系信息卡片 -->
+                        <div class="form-section-card">
+                            <div class="section-header">
+                                <i class="fas fa-phone"></i>
+                                <h6>联系信息</h6>
+                            </div>
+                            <div class="section-content">
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label for="phone" class="form-label">
+                                            <i class="fas fa-phone text-primary me-2"></i>联系电话
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-phone text-primary"></i>
+                                            </span>
+                                            <input type="tel" class="form-control" id="phone" name="phone"
+                                                   placeholder="请输入手机号码" pattern="[0-9]{11}" required>
+                                            <div class="invalid-feedback">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>请输入正确的手机号码
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 财务信息卡片 -->
+                        <div class="form-section-card">
+                            <div class="section-header">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <h6>财务信息</h6>
+                            </div>
+                            <div class="section-content">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="deposit" class="form-label">
+                                            <i class="fas fa-coins text-success me-2"></i>押金金额
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-light text-success fw-bold">¥</span>
+                                            <input type="number" class="form-control text-success fw-bold"
+                                                   id="deposit" name="deposit" min="0" step="100"
+                                                   value="200" placeholder="200.00" required>
+                                            <div class="invalid-feedback">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>请输入押金金额
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="rentalStatus" class="form-label">
+                                            <i class="fas fa-check-circle text-info me-2"></i>缴费状态
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-info-circle text-info"></i>
+                                            </span>
+                                            <select class="form-select" id="rentalStatus" required>
+                                                <option value="">选择缴费状态</option>
+                                                <option value="1" class="text-success">
+                                                    <i class="fas fa-check-circle"></i> 已缴费
+                                                </option>
+                                                <option value="2" class="text-danger">
+                                                    <i class="fas fa-exclamation-circle"></i> 未缴费
+                                                </option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>请选择缴费状态
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 入住信息卡片 -->
+                        <div class="form-section-card">
+                            <div class="section-header">
+                                <i class="fas fa-users"></i>
+                                <h6>入住信息</h6>
+                            </div>
+                            <div class="section-content">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="occupantCount" class="form-label">
+                                            <i class="fas fa-user-friends text-primary me-2"></i>入住人数
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-users text-primary"></i>
+                                            </span>
+                                            <input type="number" class="form-control" id="occupantCount"
+                                                   name="occupantCount" min="1" max="10" placeholder="1" required>
+                                            <span class="input-group-text">人</span>
+                                            <div class="invalid-feedback">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>请输入入住人数
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="checkInDate" class="form-label">
+                                            <i class="fas fa-calendar-alt text-primary me-2"></i>入住时间
+                                        </label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-calendar text-primary"></i>
+                                            </span>
+                                            <input type="date" class="form-control" id="checkInDate"
+                                                   name="checkInDate">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 备注信息卡片 -->
+                        <div class="form-section-card">
+                            <div class="section-header">
+                                <i class="fas fa-sticky-note"></i>
+                                <h6>备注信息</h6>
+                            </div>
+                            <div class="section-content">
+                                <label for="remarks" class="form-label">
+                                    <i class="fas fa-edit text-muted me-2"></i>备注说明
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-sticky-note text-muted"></i>
+                                    </span>
+                                    <textarea class="form-control form-control-lg" id="remarks" name="remarks"
+                                              rows="4" placeholder="请输入备注信息（选填）"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-success" id="saveRentalInfo">
+                        <i class="fas fa-save me-1"></i>
+                        <span id="saveButtonText">保存信息</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看租房信息详情模态框 -->
+    <div class="modal fade animate-modal" id="viewRentalInfoModal" tabindex="-1"
+         aria-labelledby="viewRentalInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content animate-scale-in">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewRentalInfoModalLabel"><i class="fas fa-info-circle me-2"></i>租房信息详情
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewRentalInfoBody">
+                    <div class="text-center py-5" id="loadingSpinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">加载中...</p>
+                    </div>
+                    <div id="rentalInfoDetails" class="animate-fade-in" style="display: none;">
+                        <!-- 租房信息详情将通过JavaScript动态填充 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>关闭
+                    </button>
+                    <button type="button" class="btn btn-primary" id="editFromView">
+                        <i class="fas fa-edit me-1"></i>编辑
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认模态框 -->
+    <div class="modal fade animate-modal" id="deleteRentalInfoModal" tabindex="-1"
+         aria-labelledby="deleteRentalInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content animate-scale-in">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteRentalInfoModalLabel"><i
+                            class="fas fa-exclamation-triangle me-2"></i>确认删除</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-trash-alt text-danger fa-3x mb-3"></i>
+                        <p class="lead">确定要删除这条租房信息记录吗？</p>
+                        <p class="text-muted">此操作不可恢复。</p>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="deleteRentalInfoWarning"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteRentalInfo">
+                        <i class="fas fa-trash-alt me-1"></i>确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // 更新当前时间
+        function updateCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            const timeElement = document.getElementById('currentTime');
+            timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+
+            // 添加时间更新动画
+            timeElement.classList.add('time-update-pulse');
+            setTimeout(() => {
+                timeElement.classList.remove('time-update-pulse');
+            }, 500);
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function () {
+            // 显示加载动画
+            const loadingOverlay = document.getElementById('globalLoadingOverlay');
+            loadingOverlay.classList.add('show');
+
+            // 页面加载完成后隐藏加载动画
+            setTimeout(function () {
+                loadingOverlay.classList.remove('show');
+            }, 800);
+
+            // 更新时间
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+
+            // 添加表单验证
+            (function () {
+                'use strict';
+
+                // 获取所有需要验证的表单
+                const forms = document.querySelectorAll('.needs-validation');
+
+                // 循环并阻止提交
+                Array.from(forms).forEach(form => {
+                    form.addEventListener('submit', event => {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            })();
+
+            // 筛选按钮事件
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    // 移除所有按钮的active类
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+
+                    // 添加当前按钮的active类
+                    this.classList.add('active');
+
+                    // 获取筛选值
+                    const filter = this.getAttribute('data-filter');
+
+                    // 筛选表格行
+                    const rows = document.querySelectorAll('.rental-info-row');
+                    rows.forEach(row => {
+                        if (filter === 'all') {
+                            row.style.display = '';
+                        } else if (filter === 'paid' && !row.classList.contains('unpaid-row')) {
+                            row.style.display = '';
+                        } else if (filter === 'unpaid' && row.classList.contains('unpaid-row')) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // 搜索功能
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+            const searchSuggestions = document.getElementById('searchSuggestions');
+            let selectedSuggestionIndex = -1;
+
+            // 获取所有租房数据用于搜索建议
+            const rentalData = [];
+            document.querySelectorAll('.rental-info-row').forEach(row => {
+                const roomNumber = row.querySelector('.room-badge').textContent.trim().replace('🏠', '').trim();
+                const tenantName = row.querySelector('.tenant-name').textContent.trim();
+                const phone = row.querySelector('.phone-info span').textContent.trim();
+
+                rentalData.push({
+                    roomNumber: roomNumber,
+                    tenantName: tenantName,
+                    phone: phone,
+                    element: row
+                });
+            });
+
+            // 防抖函数
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // 搜索函数
+            function performSearch() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const rows = document.querySelectorAll('.rental-info-row');
+                let visibleCount = 0;
+                selectedSuggestionIndex = -1;
+
+                if (searchTerm === '') {
+                    // 如果搜索框为空，显示所有行
+                    rows.forEach(row => {
+                        row.style.display = '';
+                        row.classList.remove('search-highlight');
+                        visibleCount++;
+                    });
+                    searchSuggestions.style.display = 'none';
+                    updateSearchResultsInfo(visibleCount, rows.length);
+                    return;
+                }
+
+                // 搜索匹配
+                const suggestions = [];
+                rows.forEach(row => {
+                    const roomNumber = row.querySelector('.room-badge').textContent.trim().replace(/🏠|\s/g, '').toLowerCase();
+                    const tenantName = row.querySelector('.tenant-name').textContent.toLowerCase().trim();
+                    const phone = row.querySelector('.phone-info span').textContent.toLowerCase().trim();
+
+                    const isMatch = roomNumber.includes(searchTerm) ||
+                        tenantName.includes(searchTerm) ||
+                        phone.includes(searchTerm);
+
+                    if (isMatch) {
+                        row.style.display = '';
+                        row.classList.add('search-highlight');
+                        visibleCount++;
+
+                        // 高亮匹配的文本
+                        highlightSearchText(row, searchTerm);
+                    } else {
+                        row.style.display = 'none';
+                        row.classList.remove('search-highlight');
+                        clearHighlight(row);
+                    }
+                });
+
+                // 生成搜索建议
+                if (searchTerm.length > 0) {
+                    generateSearchSuggestions(searchTerm, rentalData, suggestions);
+                }
+
+                updateSearchResultsInfo(visibleCount, rows.length);
+            }
+
+            // 添加防抖的搜索事件监听
+            searchInput.addEventListener('input', debounce(performSearch, 300));
+
+            // 键盘导航
+            searchInput.addEventListener('keydown', function (e) {
+                const suggestionItems = searchSuggestions.querySelectorAll('.search-suggestion-item');
+
+                if (suggestionItems.length === 0) return;
+
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestionItems.length - 1);
+                        updateSuggestionSelection(suggestionItems);
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                        updateSuggestionSelection(suggestionItems);
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestionItems.length) {
+                            suggestionItems[selectedSuggestionIndex].click();
+                        }
+                        break;
+                    case 'Escape':
+                        searchSuggestions.style.display = 'none';
+                        selectedSuggestionIndex = -1;
+                        break;
+                }
+            });
+
+            // 清除搜索
+            clearSearch.addEventListener('click', function () {
+                searchInput.value = '';
+                const rows = document.querySelectorAll('.rental-info-row');
+                rows.forEach(row => {
+                    row.style.display = '';
+                    row.classList.remove('search-highlight');
+                    clearHighlight(row);
+                });
+                searchSuggestions.style.display = 'none';
+                selectedSuggestionIndex = -1;
+                updateSearchResultsInfo(rows.length, rows.length);
+            });
+
+            // 搜索框获得焦点时显示搜索历史
+            searchInput.addEventListener('focus', function () {
+                if (this.value.trim() === '') {
+                    const history = getSearchHistory();
+                    if (history.length > 0) {
+                        let suggestionsHTML = '<div class="search-history-header">最近搜索</div>';
+                        history.slice(0, 5).forEach(term => {
+                            suggestionsHTML += `
+                                <div class="search-suggestion-item search-history-item" data-search-term="${term}">
+                                    <i class="fas fa-history me-2 text-muted"></i>
+                                    <span class="suggestion-history">${term}</span>
+                                    <button class="btn btn-sm btn-link ms-auto p-0 text-muted remove-history" data-term="${term}" title="删除">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `;
+                        });
+
+                        searchSuggestions.innerHTML = suggestionsHTML;
+                        searchSuggestions.style.display = 'block';
+                        addSuggestionClickEvents();
+                        addRemoveHistoryEvents();
+                    }
+                }
+            });
+
+            // 删除搜索历史事件
+            function addRemoveHistoryEvents() {
+                searchSuggestions.querySelectorAll('.remove-history').forEach(btn => {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const term = this.dataset.term;
+                        removeSearchHistory(term);
+
+                        // 重新显示历史
+                        if (searchInput.value.trim() === '') {
+                            searchInput.focus();
+                        }
+                    });
+                });
+            }
+
+            // 删除搜索历史项
+            function removeSearchHistory(termToRemove) {
+                let history = getSearchHistory();
+                history = history.filter(term => term !== termToRemove);
+                localStorage.setItem('rentalSearchHistory', JSON.stringify(history));
+            }
+
+            // 点击外部时隐藏搜索建议
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest('.search-container')) {
+                    searchSuggestions.style.display = 'none';
+                }
+            });
+
+            // 高亮搜索文本
+            function highlightSearchText(row, searchTerm) {
+                const elements = [
+                    row.querySelector('.room-badge'),
+                    row.querySelector('.tenant-name'),
+                    row.querySelector('.phone-info span')
+                ];
+
+                elements.forEach(element => {
+                    if (element) {
+                        const text = element.textContent;
+                        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                        if (regex.test(text)) {
+                            element.innerHTML = text.replace(regex, '<mark class="search-match">$1</mark>');
+                        }
+                    }
+                });
+            }
+
+            // 清除高亮
+            function clearHighlight(row) {
+                const elements = [
+                    row.querySelector('.room-badge'),
+                    row.querySelector('.tenant-name'),
+                    row.querySelector('.phone-info span')
+                ];
+
+                elements.forEach(element => {
+                    if (element && element.querySelector('mark')) {
+                        element.innerHTML = element.textContent;
+                    }
+                });
+            }
+
+            // 生成搜索建议
+            function generateSearchSuggestions(searchTerm, data, suggestions) {
+                selectedSuggestionIndex = -1;
+
+                // 获取智能匹配结果
+                const matches = data.map(item => {
+                    const roomScore = getMatchScore(item.roomNumber, searchTerm);
+                    const nameScore = getMatchScore(item.tenantName, searchTerm);
+                    const phoneScore = getMatchScore(item.phone, searchTerm);
+                    const maxScore = Math.max(roomScore, nameScore, phoneScore);
+
+                    return {
+                        ...item,
+                        score: maxScore,
+                        matchType: roomScore === maxScore ? 'room' :
+                            nameScore === maxScore ? 'name' : 'phone'
+                    };
+                }).filter(item => item.score > 0)
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 5);
+
+                // 如果没有匹配项，显示搜索历史
+                if (matches.length === 0 && searchTerm.length > 0) {
+                    const history = getSearchHistory().filter(term =>
+                        term.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).slice(0, 3);
+
+                    if (history.length > 0) {
+                        let suggestionsHTML = '<div class="search-history-header">搜索历史</div>';
+                        history.forEach(term => {
+                            suggestionsHTML += `
+                                <div class="search-suggestion-item search-history-item" data-search-term="${term}">
+                                    <i class="fas fa-history me-2 text-muted"></i>
+                                    <span class="suggestion-history">${term}</span>
+                                </div>
+                            `;
+                        });
+
+                        searchSuggestions.innerHTML = suggestionsHTML;
+                        searchSuggestions.style.display = 'block';
+                        addSuggestionClickEvents();
+                        return;
+                    }
+                }
+
+                if (matches.length > 0) {
+                    let suggestionsHTML = '';
+                    matches.forEach(match => {
+                        const highlightClass = match.matchType === 'room' ? 'text-primary' :
+                            match.matchType === 'name' ? 'text-success' : 'text-info';
+
+                        suggestionsHTML += `
+                            <div class="search-suggestion-item" data-room="${match.roomNumber}" data-tenant="${match.tenantName}" data-phone="${match.phone}">
+                                <i class="fas fa-home me-2 ${highlightClass}"></i>
+                                <span class="suggestion-room ${match.matchType === 'room' ? highlightClass : ''}">${highlightSearchTerm(match.roomNumber, searchTerm)}</span>
+                                <span class="suggestion-tenant ${match.matchType === 'name' ? highlightClass : ''}">${highlightSearchTerm(match.tenantName, searchTerm)}</span>
+                                <span class="suggestion-phone text-muted ${match.matchType === 'phone' ? highlightClass : ''}">${highlightSearchTerm(match.phone, searchTerm)}</span>
+                            </div>
+                        `;
+                    });
+
+                    searchSuggestions.innerHTML = suggestionsHTML;
+                    searchSuggestions.style.display = 'block';
+                    addSuggestionClickEvents();
+                } else {
+                    searchSuggestions.style.display = 'none';
+                }
+            }
+
+            // 高亮建议中的搜索词
+            function highlightSearchTerm(text, searchTerm) {
+                if (!searchTerm || searchTerm.length < 1) return text;
+
+                const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                return text.replace(regex, '<strong>$1</strong>');
+            }
+
+            // 添加建议项点击事件
+            function addSuggestionClickEvents() {
+                searchSuggestions.querySelectorAll('.search-suggestion-item').forEach(item => {
+                    item.addEventListener('click', function () {
+                        let searchValue = '';
+
+                        if (this.classList.contains('search-history-item')) {
+                            searchValue = this.dataset.searchTerm;
+                        } else {
+                            // 根据匹配类型选择搜索值
+                            const room = this.dataset.room;
+                            const tenant = this.dataset.tenant;
+                            const phone = this.dataset.phone;
+
+                            // 优先使用租客姓名，因为这是最常用的搜索方式
+                            searchValue = tenant || room || phone;
+                        }
+
+                        searchInput.value = searchValue;
+                        saveSearchHistory(searchValue);
+
+                        // 触发搜索
+                        performSearch();
+                        searchSuggestions.style.display = 'none';
+                        selectedSuggestionIndex = -1;
+                    });
+                });
+            }
+
+            // 更新建议选择状态
+            function updateSuggestionSelection(suggestionItems) {
+                suggestionItems.forEach((item, index) => {
+                    if (index === selectedSuggestionIndex) {
+                        item.classList.add('selected');
+                        item.scrollIntoView({block: 'nearest'});
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
+
+            // 更新搜索结果信息
+            function updateSearchResultsInfo(visibleCount, totalCount) {
+                // 在搜索框下方显示搜索结果统计
+                let resultInfo = document.querySelector('.search-result-info');
+                if (!resultInfo) {
+                    resultInfo = document.createElement('div');
+                    resultInfo.className = 'search-result-info mt-2 text-muted small';
+                    searchInput.parentNode.parentNode.appendChild(resultInfo);
+                }
+
+                if (searchInput.value.trim() !== '') {
+                    resultInfo.textContent = `找到 ${visibleCount} 条记录（共 ${totalCount} 条）`;
+                    resultInfo.style.display = 'block';
+                } else {
+                    resultInfo.style.display = 'none';
+                }
+            }
+
+            // 智能搜索匹配函数
+            function getMatchScore(text, searchTerm) {
+                text = text.toLowerCase();
+                searchTerm = searchTerm.toLowerCase();
+
+                if (text === searchTerm) return 100;
+                if (text.startsWith(searchTerm)) return 80;
+                if (text.includes(searchTerm)) return 60;
+
+                // 模糊匹配
+                let score = 0;
+                let searchIndex = 0;
+                for (let i = 0; i < text.length && searchIndex < searchTerm.length; i++) {
+                    if (text[i] === searchTerm[searchIndex]) {
+                        score++;
+                        searchIndex++;
+                    }
+                }
+                return searchIndex === searchTerm.length ? score * 2 : 0;
+            }
+
+            // 获取搜索历史
+            function getSearchHistory() {
+                const history = localStorage.getItem('rentalSearchHistory');
+                return history ? JSON.parse(history) : [];
+            }
+
+            // 保存搜索历史
+            function saveSearchHistory(searchTerm) {
+                if (searchTerm.trim().length < 2) return;
+
+                let history = getSearchHistory();
+                history = history.filter(item => item !== searchTerm);
+                history.unshift(searchTerm);
+                history = history.slice(0, 10); // 保留最近10条
+
+                localStorage.setItem('rentalSearchHistory', JSON.stringify(history));
+            }
+        });
+
+        // 保存租房信息
+        document.getElementById('saveRentalInfo').addEventListener('click', function () {
+            const form = document.getElementById('rentalInfoForm');
+            const formData = new FormData(form);
+            const id = document.getElementById('rentalInfoId').value;
+
+            // 验证表单
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            // 构建数据对象
+            const data = {
+                room_number: formData.get('roomNumber'),
+                tenant_name: formData.get('tenantName'),
+                phone: formData.get('phone'),
+                deposit: formData.get('deposit'),
+                occupant_count: formData.get('occupantCount'),
+                check_in_date: formData.get('checkInDate'),
+                rental_status: document.getElementById('rentalStatus').value,
+                remarks: document.getElementById('remarks').value
+            };
+
+            // 发送请求
+            const url = id ? `/api/rental_info_old/${id}` : '/api/rental_info_old';
+            const method = id ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        // 关闭模态框
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('rentalInfoModal'));
+                        modal.hide();
+                        // 刷新页面
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        showNotification(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('保存失败:', error);
+                    showNotification('保存失败: ' + error.message, 'error');
+                });
+        });
+
+        // 通知系统
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show notification-toast`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-triangle' : 'fa-info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            // 自动移除
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // 添加租房信息
+        function addRentalInfo() {
+            // 重置表单
+            document.getElementById('rentalInfoForm').reset();
+            document.getElementById('rentalInfoForm').classList.remove('was-validated');
+            document.getElementById('rentalInfoId').value = '';
+            document.getElementById('rentalInfoModalLabel').innerHTML = '<i class="fas fa-plus me-2"></i>添加租房信息';
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('rentalInfoModal'));
+            modal.show();
+        }
+
+        // 查看租房信息详情
+        function viewRentalInfo(id) {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const rentalInfoDetails = document.getElementById('rentalInfoDetails');
+
+            // 显示加载状态
+            loadingSpinner.style.display = 'block';
+            rentalInfoDetails.style.display = 'none';
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('viewRentalInfoModal'));
+            modal.show();
+
+            // 发送AJAX请求获取详细信息
+            fetch(`/api/rental_info_old/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    // 构建详情HTML - 美化版
+                    const detailsHTML = `
+                        <div class="detail-header">
+                            <div class="detail-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="detail-title">
+                                <h4>房号 ${data.room_number}</h4>
+                                <span class="status-badge ${data.rental_status === 1 ? 'status-paid' : 'status-unpaid'}">
+                                    ${data.rental_status_text}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-cards">
+                            <!-- 租客信息卡片 -->
+                            <div class="detail-card">
+                                <div class="card-header">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span>租客信息</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-row">
+                                        <i class="fas fa-user text-primary"></i>
+                                        <span class="label">租客姓名</span>
+                                        <span class="value">${data.tenant_name}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="fas fa-phone text-success"></i>
+                                        <span class="label">联系电话</span>
+                                        <span class="value">${data.phone}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 财务信息卡片 -->
+                            <div class="detail-card">
+                                <div class="card-header">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span>财务信息</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-row">
+                                        <i class="fas fa-money-bill-wave text-warning"></i>
+                                        <span class="label">押金金额</span>
+                                        <span class="value money">¥${data.deposit.toFixed(2)}</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="fas fa-calendar-check text-info"></i>
+                                        <span class="label">入住时间</span>
+                                        <span class="value">${data.check_in_date || '未入住'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 系统信息卡片 -->
+                            <div class="detail-card">
+                                <div class="card-header">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>系统信息</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="info-row">
+                                        <i class="fas fa-users text-secondary"></i>
+                                        <span class="label">入住人数</span>
+                                        <span class="value">${data.occupant_count} 人</span>
+                                    </div>
+                                    <div class="info-row">
+                                        <i class="fas fa-clock text-muted"></i>
+                                        <span class="label">创建时间</span>
+                                        <span class="value">${data.created_at}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 备注信息卡片 -->
+                            <div class="detail-card full-width">
+                                <div class="card-header">
+                                    <i class="fas fa-sticky-note"></i>
+                                    <span>备注信息</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="remarks-content">
+                                        <i class="fas fa-quote-left text-muted"></i>
+                                        <p>${data.remarks || '暂无备注信息'}</p>
+                                        <i class="fas fa-quote-right text-muted"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    `;
+
+                    rentalInfoDetails.innerHTML = detailsHTML;
+                    loadingSpinner.style.display = 'none';
+                    rentalInfoDetails.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('获取租房信息失败:', error);
+                    rentalInfoDetails.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            获取租房信息失败: ${error.message}
+                        </div>
+                    `;
+                    loadingSpinner.style.display = 'none';
+                    rentalInfoDetails.style.display = 'block';
+                });
+
+            // 设置编辑按钮的事件
+            document.getElementById('editFromView').onclick = function () {
+                modal.hide();
+                editRentalInfo(id);
+            };
+        }
+
+        // 编辑租房信息
+        function editRentalInfo(id) {
+            // 重置表单
+            const form = document.getElementById('rentalInfoForm');
+            form.reset();
+            form.classList.remove('was-validated'); // 移除验证状态
+            document.getElementById('rentalInfoId').value = id;
+            document.getElementById('rentalInfoModalLabel').innerHTML = '<i class="fas fa-edit me-2"></i>编辑租房信息';
+
+            // 获取租房信息详情并填充表单
+            fetch(`/api/rental_info_old/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    // 填充表单数据
+                    document.getElementById('roomNumber').value = data.room_number;
+                    document.getElementById('tenantName').value = data.tenant_name;
+                    document.getElementById('phone').value = data.phone;
+                    document.getElementById('deposit').value = data.deposit;
+                    document.getElementById('occupantCount').value = data.occupant_count;
+                    document.getElementById('checkInDate').value = data.check_in_date;
+                    document.getElementById('rentalStatus').value = data.rental_status;
+                    document.getElementById('remarks').value = data.remarks;
+                })
+                .catch(error => {
+                    console.error('获取租房信息失败:', error);
+                    showNotification('获取租房信息失败: ' + error.message, 'error');
+                });
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('rentalInfoModal'));
+            modal.show();
+        }
+
+        // 删除租房信息
+        function deleteRentalInfo(id) {
+            document.getElementById('deleteRentalInfoWarning').textContent = '删除租房信息将同时删除相关的租赁记录和缴费记录。';
+
+            // 设置确认按钮的事件
+            document.getElementById('confirmDeleteRentalInfo').onclick = function () {
+                // 发送删除请求
+                fetch(`/api/rental_info_old/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showNotification(data.message, 'success');
+                            // 刷新页面
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            showNotification(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('删除失败:', error);
+                        showNotification('删除失败: ' + error.message, 'error');
+                    });
+
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteRentalInfoModal'));
+                modal.hide();
+            };
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('deleteRentalInfoModal'));
+            modal.show();
+        }
+
+        // 导出租房信息
+        function exportRentalInfo(type) {
+            alert(`导出${type}租房信息功能尚未实现`);
+        }
+
+        // 显示租房信息汇总
+        function showRentalInfoSummary() {
+            alert('租房信息汇总功能尚未实现');
+        }
+
+        // 加载空闲房间列表
+        function loadAvailableRooms() {
+            fetch('/api/available_rooms_old')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const roomSelect = document.getElementById('roomNumber');
+                        // 清空现有选项（保留默认选项）
+                        roomSelect.innerHTML = '<option value="">请选择空闲房间</option>';
+
+                        // 添加空闲房间选项
+                        data.rooms.forEach(room => {
+                            const option = document.createElement('option');
+                            option.value = room.room_number;
+                            option.textContent = `${room.room_number} - ${room.room_type} (基础租金: ¥${room.base_rent})`;
+                            roomSelect.appendChild(option);
+                        });
+                    } else {
+                        console.error('加载空闲房间失败:', data.message);
+                        showNotification('加载空闲房间失败: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('加载空闲房间失败:', error);
+                    showNotification('加载空闲房间失败: ' + error.message, 'error');
+                });
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAvailableRooms();
+        });
+    </script>
+{% endblock %}

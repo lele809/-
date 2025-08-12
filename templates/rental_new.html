@@ -1,0 +1,2243 @@
+{% extends "base_new.html" %}
+
+{% block title %}六楼管理 - 租房管理 - 租房管理系统{% endblock %}
+
+{% block page_title %}六楼管理 - 租房管理{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index6') }}"><i class="fas fa-home"></i> 主页</a></li>
+                <li class="breadcrumb-item active">租房管理</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rental.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- 页面标题 -->
+    <div class="rental-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2><i class="fas fa-building me-3"></i> 租房管理</h2>
+                <p><i class="fas fa-info-circle me-2"></i>管理五楼所有房间的租赁信息和缴费状态</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>{{ moment().format('YYYY年MM月DD日') if moment else '今日' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        <span id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="row stats-row">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon total">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="stats-number">{{ rental_list|length }}</div>
+                <div class="stats-label">总房间数</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon occupied">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ rental_list|selectattr('check_out_date', 'none')|list|length }}</div>
+                <div class="stats-label">已入住房间</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon paid">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ rental_list|selectattr('payment_status', 'equalto', 1)|list|length }}</div>
+                <div class="stats-label">已缴费房间</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon unpaid">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="stats-number">{{ rental_list|selectattr('payment_status', 'equalto', 2)|list|length }}</div>
+                <div class="stats-label">未缴费房间</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选区域 -->
+    <div class="search-section">
+        <div class="row align-items-center mb-4">
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="search-wrapper">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control search-input"
+                               placeholder="🔍 搜索房间号、租客姓名..."
+                               id="searchInput"
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()"
+                                title="清除搜索">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="search-suggestions" id="searchSuggestions" style="display: none;">
+                        <!-- 搜索建议将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期筛选 -->
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="date-filter-wrapper">
+                    <label class="form-label small text-muted mb-1">
+                        <i class="fas fa-calendar-alt"></i> 按月份筛选
+                    </label>
+                    <div class="input-group">
+                        <select class="form-select" id="yearFilter">
+                            <option value="">选择年份</option>
+                        </select>
+                        <select class="form-select" id="monthFilter">
+                            <option value="">选择月份</option>
+                            <option value="1">1月</option>
+                            <option value="2">2月</option>
+                            <option value="3">3月</option>
+                            <option value="4">4月</option>
+                            <option value="5">5月</option>
+                            <option value="6">6月</option>
+                            <option value="7">7月</option>
+                            <option value="8">8月</option>
+                            <option value="9">9月</option>
+                            <option value="10">10月</option>
+                            <option value="11">11月</option>
+                            <option value="12">12月</option>
+                        </select>
+                        <button class="btn btn-outline-primary" type="button" onclick="clearDateFilter()"
+                                title="清除日期筛选">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5 col-md-12">
+                <div class="action-buttons d-flex flex-wrap gap-2 justify-content-end">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-success" onclick="exportBills('all')" title="导出所有账单">
+                            <i class="fas fa-file-excel me-1"></i> 导出账单
+                        </button>
+                        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">更多选项</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="exportBills('paid')">
+                                <i class="fas fa-check text-success me-2"></i> 导出已缴费账单</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportBills('unpaid')">
+                                <i class="fas fa-times text-danger me-2"></i> 导出未缴费账单</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="exportBills('current_month')">
+                                <i class="fas fa-calendar text-info me-2"></i> 导出本月账单</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="#" onclick="showBillSummary()">
+                                <i class="fas fa-chart-bar text-primary me-2"></i> 账单汇总报表</a></li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary add-rental-btn" onclick="addRental()">
+                        <i class="fas fa-plus me-1"></i> 添加收费记录
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日期筛选信息 -->
+        <div id="dateFilterInfo" class="date-filter-info" style="display: none;">
+            <i class="fas fa-calendar-check"></i>
+            <span id="dateFilterText">正在显示全部数据</span>
+        </div>
+
+        <!-- 筛选按钮 -->
+        <div class="filter-buttons">
+            <button class="btn btn-outline-primary filter-btn active" data-filter="all">
+                <i class="fas fa-list"></i> 全部
+            </button>
+            <button class="btn btn-outline-success filter-btn" data-filter="paid">
+                <i class="fas fa-check"></i> 已缴费
+            </button>
+            <button class="btn btn-outline-danger filter-btn" data-filter="unpaid">
+                <i class="fas fa-times"></i> 未缴费
+            </button>
+            <button class="btn btn-outline-warning filter-btn" data-filter="occupied">
+                <i class="fas fa-user"></i> 已入住
+            </button>
+            <button class="btn btn-outline-secondary filter-btn" data-filter="vacant">
+                <i class="fas fa-door-open"></i> 已退房
+            </button>
+        </div>
+    </div>
+
+    <!-- 租房信息列表 -->
+    <div class="rental-table">
+        {% if rental_list %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>房间号</th>
+                        <th>租客姓名</th>
+                        <th>押金</th>
+                        <th>月租金</th>
+                        <th>水电费</th>
+                        <th>应缴费</th>
+                        <th>缴费状态</th>
+                        <th>创建时间</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="rentalTableBody">
+                    {% for rental in rental_list %}
+                        <tr class="rental-row"
+                            data-search="{{ rental.room_number }}{{ rental.tenant_name }}"
+                            data-status="{{ 'paid' if rental.payment_status == 1 else 'unpaid' }}"
+                            data-occupancy="{{ 'occupied' if not rental.check_out_date else 'vacant' }}">
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <span class="room-badge">
+                                    <i class="fas fa-door-open me-1"></i>{{ rental.room_number }}
+                                </span>
+                            </td>
+                            <td class="tenant-name">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user me-2 text-muted"></i>
+                                    <span>{{ rental.tenant_name }}</span>
+                                </div>
+                            </td>
+                            <td class="money-amount amount-positive">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-piggy-bank me-2 text-muted"></i>
+                                    <span>¥{{ "%.2f"|format(rental.deposit|float) }}</span>
+                                </div>
+                            </td>
+                            <td class="money-amount amount-positive">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-home me-2 text-muted"></i>
+                                    <span>¥{{ "%.2f"|format(rental.monthly_rent|float) }}</span>
+                                </div>
+                            </td>
+                            <td class="money-amount">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-bolt me-2 text-muted"></i>
+                                    <span>¥{{ "%.2f"|format(rental.utilities_fee|float) }}</span>
+                                </div>
+                            </td>
+                            <td class="money-amount amount-positive">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calculator me-2 text-muted"></i>
+                                    <span>¥{{ "%.2f"|format(rental.total_due|float) }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if rental.payment_status == 1 %}
+                                    <span class="payment-status status-paid">
+                                <i class="fas fa-check"></i> 已缴费
+                            </span>
+                                {% else %}
+                                    <span class="payment-status status-unpaid">
+                                <i class="fas fa-times"></i> 未缴费
+                            </span>
+                                {% endif %}
+                            </td>
+                            <td class="created-time">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-clock me-2 text-muted"></i>
+                                    <div class="time-info">
+                                        <div class="date-text">{{ rental.created_at.strftime('%Y-%m-%d') if rental.created_at else '-' }}</div>
+                                        <small class="time-text text-muted">{{ rental.created_at.strftime('%H:%M:%S') if rental.created_at else '' }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if rental.remarks %}
+                                    <span class="remarks-text" title="{{ rental.remarks }}">{{ rental.remarks }}</span>
+                                {% else %}
+                                    <span class="text-muted">无</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group-vertical btn-group-sm" role="group">
+                                    <button class="btn btn-primary btn-action btn-sm mb-1"
+                                            onclick="viewRental({{ rental.id }})"
+                                            title="查看详情">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-info btn-action btn-sm mb-1"
+                                            onclick="viewBill({{ rental.id }}, '{{ rental.room_number }}')"
+                                            title="查看账单">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-action btn-sm mb-1"
+                                            onclick="editRental({{ rental.id }})"
+                                            title="编辑">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% if rental.payment_status == 2 %}
+                                        <button class="btn btn-success btn-action btn-sm mb-1"
+                                                onclick="showMarkAsPaidModal({{ rental.id }}, '{{ rental.room_number }}', '{{ rental.tenant_name }}', {{ rental.total_due }})"
+                                                title="标记已缴费">
+                                            <i class="fas fa-money-bill"></i>
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-danger btn-action btn-sm"
+                                            onclick="deleteRental({{ rental.id }}, '{{ rental.room_number }}')"
+                                            title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-building"></i>
+                <h4>暂无租房记录</h4>
+                <p>还没有添加任何租房记录，点击上方按钮开始添加</p>
+                <button class="btn btn-primary add-rental-btn" onclick="addRental()">
+                    <i class="fas fa-plus"></i> 添加第一个租房记录
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 账单查看模态框 -->
+    <div class="modal fade" id="billModal" tabindex="-1" aria-labelledby="billModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="billModalLabel">
+                        <i class="fas fa-file-invoice"></i> 缴费账单详情
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="billModalBody">
+                    <!-- 账单内容将通过JavaScript动态加载 -->
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载账单信息...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="printBill()">
+                        <i class="fas fa-print"></i> 打印账单
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="downloadBillPDF()">
+                        <i class="fas fa-download"></i> 下载PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 账单汇总报表模态框 -->
+    <div class="modal fade" id="billSummaryModal" tabindex="-1" aria-labelledby="billSummaryModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="billSummaryModalLabel">
+                        <i class="fas fa-chart-bar"></i> 账单汇总报表
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="billSummaryModalBody">
+                    <!-- 汇总报表内容将通过JavaScript动态加载 -->
+                    <div class="text-center">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在生成汇总报表...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="exportSummaryExcel()">
+                        <i class="fas fa-file-excel"></i> 导出Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 标记已缴费确认模态框 -->
+    <div class="modal fade" id="markAsPaidModal" tabindex="-1" aria-labelledby="markAsPaidModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="markAsPaidModalLabel">
+                        <i class="fas fa-money-bill"></i> 标记已缴费
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="markAsPaidModalBody">
+                    <!-- 内容将通过JavaScript填充 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmMarkAsPaidBtn">
+                        <i class="fas fa-check"></i> 确认标记已缴费
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加租房记录模态框 -->
+    <div class="modal fade" id="addRentalModal" tabindex="-1" aria-labelledby="addRentalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addRentalModalLabel">
+                        <i class="fas fa-plus"></i> 添加收费记录
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRentalForm" novalidate>
+                        <div class="row">
+                            <!-- 基本信息 -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> 基本信息</h6>
+                                <div class="mb-3">
+                                    <label for="roomNumber" class="form-label">房间号 <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="roomNumber" name="roomNumber" required>
+                                        <option value="">请选择已出租房间</option>
+                                    </select>
+                                    <div class="invalid-feedback">请选择房间号</div>
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i> 只显示已出租状态的房间
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="tenantName" class="form-label">租客姓名 <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="tenantName" name="tenantName" required
+                                           readonly>
+                                    <div class="invalid-feedback">请选择房间号以自动填入租客姓名</div>
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i> 选择房间号后自动填入对应租客姓名
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="deposit" class="form-label">押金 (元)</label>
+                                    <input type="number" class="form-control" id="deposit" name="deposit" min="0"
+                                           step="0.01" value="0" readonly>
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-lock"></i> 押金金额自动从租房信息获取，不可修改
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="paymentStatus" class="form-label">缴费状态</label>
+                                    <select class="form-select" id="paymentStatus" name="paymentStatus">
+                                        <option value="2">未缴费</option>
+                                        <option value="1">已缴费</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 费用信息 -->
+                            <div class="col-md-6">
+                                <h6 class="text-success mb-3"><i class="fas fa-money-bill"></i> 费用信息</h6>
+                                <div class="mb-3">
+                                    <label for="monthlyRent" class="form-label">月租金 (元) <span
+                                            class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="monthlyRent" name="monthlyRent"
+                                           min="0" step="0.01" required readonly>
+                                    <div class="invalid-feedback">请输入月租金</div>
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-lock"></i> 月租金自动从租房信息获取，不可修改
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="waterFee" class="form-label">用水量 (方)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="waterFee" name="waterFee"
+                                               min="0" step="0.1" value="0" placeholder="请输入用水量">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-tint text-info" data-bs-toggle="tooltip"
+                                               title="水费单价: 3.5元/方，自动计算费用"></i>
+                                        </span>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-tint text-info"></i> 输入用水量，系统将按3.5元/方自动计算水费
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="electricityFee" class="form-label">用电量 (度)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="electricityFee"
+                                               name="electricityFee"
+                                               min="0" step="0.1" value="0" placeholder="请输入用电量">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-bolt text-warning" data-bs-toggle="tooltip"
+                                               title="电费单价: 1.2元/度，自动计算费用"></i>
+                                        </span>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-bolt text-warning"></i> 输入用电量，系统将按1.2元/度自动计算电费
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="totalDue" class="form-label">应缴费总额 (元)</label>
+                                    <input type="number" class="form-control" id="totalDue" name="totalDue" readonly>
+                                    <small class="form-text text-muted">自动计算：月租金 + (用水量×3.5) +
+                                        (用电量×1.2)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 日期信息 -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-info mb-3"><i class="fas fa-calendar"></i> 日期信息</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="checkInDate" class="form-label">入住日期</label>
+                                    <input type="date" class="form-control" id="checkInDate" name="checkInDate"
+                                           readonly>
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-lock"></i> 入住日期自动从租房信息获取，不可修改
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 备注 -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="remarks" class="form-label">备注</label>
+                                    <textarea class="form-control" id="remarks" name="remarks" rows="3"
+                                              placeholder="请输入备注信息..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveRentalBtn">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始化时间显示
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+
+            // 添加表格行的交错动画
+            setTimeout(() => {
+                const rows = document.querySelectorAll('.rental-row');
+                rows.forEach((row, index) => {
+                    row.style.animationDelay = `${index * 0.1}s`;
+                    row.style.animation = 'fadeInUp 0.6s ease-out both';
+                });
+            }, 100);
+
+            // 初始化搜索建议
+            initSearchSuggestions();
+
+            // 添加统计卡片动画
+            setTimeout(() => {
+                const statsCards = document.querySelectorAll('.stats-card');
+                statsCards.forEach((card, index) => {
+                    card.style.animationDelay = `${index * 0.2}s`;
+                    card.style.animation = 'fadeInUp 0.6s ease-out both';
+                });
+            }, 200);
+
+            // 初始化添加租房记录表单
+            initAddRentalForm();
+
+            // 初始化房间选择事件处理器
+            setupRoomSelectHandler();
+
+            // 初始化日期筛选器
+            initDateFilter();
+
+            // 初始化Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // 初始化添加租房记录表单
+        function initAddRentalForm() {
+            const monthlyRentInput = document.getElementById('monthlyRent');
+            const waterFeeInput = document.getElementById('waterFee');
+            const electricityFeeInput = document.getElementById('electricityFee');
+            const totalDueInput = document.getElementById('totalDue');
+            const saveBtn = document.getElementById('saveRentalBtn');
+
+            // 自动计算总费用
+            function calculateTotalDue() {
+                const monthlyRent = parseFloat(monthlyRentInput.value) || 0;
+                const waterUsage = parseFloat(waterFeeInput.value) || 0;
+                const electricityUsage = parseFloat(electricityFeeInput.value) || 0;
+
+                // 根据用量和单价计算费用
+                const waterFee = waterUsage * 3.5; // 水费：3.5元/方
+                const electricityFee = electricityUsage * 1.2; // 电费：1.2元/度
+                const totalUtilitiesFee = waterFee + electricityFee;
+
+                const totalDue = monthlyRent + totalUtilitiesFee;
+                totalDueInput.value = totalDue.toFixed(2);
+            }
+
+            // 监听费用输入变化
+            monthlyRentInput.addEventListener('input', calculateTotalDue);
+            waterFeeInput.addEventListener('input', calculateTotalDue);
+            electricityFeeInput.addEventListener('input', calculateTotalDue);
+
+            // 保存按钮点击事件
+            saveBtn.addEventListener('click', function () {
+                const form = document.getElementById('addRentalForm');
+
+                // 验证表单
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+
+                // 收集表单数据
+                const formData = new FormData(form);
+
+                // 计算实际费用
+                const waterUsage = parseFloat(formData.get('waterFee')) || 0;
+                const electricityUsage = parseFloat(formData.get('electricityFee')) || 0;
+                const waterFee = waterUsage * 3.5; // 水费：3.5元/方
+                const electricityFee = electricityUsage * 1.2; // 电费：1.2元/度
+
+                const data = {
+                    room_number: formData.get('roomNumber'),
+                    tenant_name: formData.get('tenantName'),
+                    deposit: formData.get('deposit'),
+                    monthly_rent: formData.get('monthlyRent'),
+                    water_fee: waterFee.toFixed(2),
+                    electricity_fee: electricityFee.toFixed(2),
+                    utilities_fee: (waterFee + electricityFee).toFixed(2),
+                    payment_status: formData.get('paymentStatus'),
+                    check_in_date: formData.get('checkInDate') || null,
+                    check_out_date: formData.get('checkOutDate') || null,
+                    contract_start_date: formData.get('contractStartDate') || null,
+                    contract_end_date: formData.get('contractEndDate') || null,
+                    remarks: formData.get('remarks')
+                };
+
+                // 显示加载状态
+                const loading = showLoading();
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+
+                // 发送请求
+                fetch('/api/rental_new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        hideLoading(loading);
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+
+                        if (result.success) {
+                            showMessage('租房记录添加成功', 'success');
+                            // 关闭模态框
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('addRentalModal'));
+                            modal.hide();
+                            // 刷新页面
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showMessage('添加失败：' + result.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        hideLoading(loading);
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+                        console.error('Error:', error);
+                        showMessage('添加失败，请稍后重试', 'error');
+                    });
+            });
+        }
+
+        // 更新当前时间
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        }
+
+        // 显示消息提示
+        function showMessage(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `message-toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${getMessageIcon(type)} me-2"></i>
+                ${message}
+            `;
+            document.body.appendChild(toast);
+
+            // 显示动画
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            // 自动隐藏
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // 获取消息图标
+        function getMessageIcon(type) {
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            return icons[type] || icons.info;
+        }
+
+        // 高亮表格行
+        function highlightRow(rowElement) {
+            rowElement.classList.add('highlight');
+            setTimeout(() => rowElement.classList.remove('highlight'), 2000);
+        }
+
+        // 显示加载动画
+        function showLoading() {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div class="loading-spinner"></div>
+            `;
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+
+        // 隐藏加载动画
+        function hideLoading(overlay) {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }
+
+        // 初始化搜索建议
+        function initSearchSuggestions() {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+
+            // 获取所有房间号和租客姓名用于建议
+            const allData = Array.from(document.querySelectorAll('.rental-row')).map(row => {
+                const searchData = row.getAttribute('data-search');
+                const roomNumber = row.querySelector('.room-badge').textContent.trim();
+                const tenantName = row.querySelector('.tenant-name span').textContent.trim();
+                return {roomNumber, tenantName, searchData};
+            });
+
+            searchInput.addEventListener('input', function () {
+                const value = this.value.toLowerCase().trim();
+                if (value.length > 0) {
+                    showSearchSuggestions(value, allData, suggestionsContainer);
+                } else {
+                    hideSuggestions(suggestionsContainer);
+                }
+                filterTable();
+            });
+
+            // 点击外部隐藏建议
+            document.addEventListener('click', function (e) {
+                if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                    hideSuggestions(suggestionsContainer);
+                }
+            });
+        }
+
+        // 显示搜索建议
+        function showSearchSuggestions(query, allData, container) {
+            const suggestions = allData.filter(item =>
+                item.searchData.toLowerCase().includes(query)
+            ).slice(0, 5); // 最多显示5个建议
+
+            if (suggestions.length > 0) {
+                container.innerHTML = suggestions.map(item => `
+                    <div class="search-suggestion-item" onclick="selectSuggestion('${item.roomNumber}')">
+                        <i class="fas fa-search"></i>
+                        <span>${item.roomNumber} - ${item.tenantName}</span>
+                    </div>
+                `).join('');
+                container.style.display = 'block';
+            } else {
+                hideSuggestions(container);
+            }
+        }
+
+        // 隐藏建议
+        function hideSuggestions(container) {
+            container.style.display = 'none';
+        }
+
+        // 选择建议
+        function selectSuggestion(value) {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            searchInput.value = value;
+            hideSuggestions(suggestionsContainer);
+            filterTable();
+            searchInput.focus();
+        }
+
+        // 清除搜索
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsContainer = document.getElementById('searchSuggestions');
+            searchInput.value = '';
+            hideSuggestions(suggestionsContainer);
+            searchInput.focus();
+            filterTable();
+        }
+
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase();
+            filterTable();
+        });
+
+        // 筛选功能
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                // 移除所有按钮的active类
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                // 添加当前按钮的active类
+                this.classList.add('active');
+
+                filterTable();
+            });
+        });
+
+        // 表格筛选函数
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+            const rows = document.querySelectorAll('.rental-row');
+
+            rows.forEach(row => {
+                const searchData = row.getAttribute('data-search').toLowerCase();
+                const status = row.getAttribute('data-status');
+                const occupancy = row.getAttribute('data-occupancy');
+
+                let showRow = true;
+
+                // 搜索筛选
+                if (searchTerm && !searchData.includes(searchTerm)) {
+                    showRow = false;
+                }
+
+                // 状态筛选
+                if (activeFilter !== 'all') {
+                    if (activeFilter === 'paid' && status !== 'paid') showRow = false;
+                    if (activeFilter === 'unpaid' && status !== 'unpaid') showRow = false;
+                    if (activeFilter === 'occupied' && occupancy !== 'occupied') showRow = false;
+                    if (activeFilter === 'vacant' && occupancy !== 'vacant') showRow = false;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+
+            // 更新序号
+            updateRowNumbers();
+        }
+
+        // 更新行号
+        function updateRowNumbers() {
+            const visibleRows = document.querySelectorAll('.rental-row[style=""], .rental-row:not([style])');
+            visibleRows.forEach((row, index) => {
+                row.querySelector('td:first-child').textContent = index + 1;
+            });
+        }
+
+        // 添加租房记录
+        function addRental() {
+            // 重置表单
+            const form = document.getElementById('addRentalForm');
+            form.reset();
+            form.classList.remove('was-validated');
+
+            // 设置默认值
+            document.getElementById('deposit').value = '0';
+            document.getElementById('waterFee').value = '0';
+            document.getElementById('electricityFee').value = '0';
+            document.getElementById('paymentStatus').value = '2';
+
+            // 加载已出租房间列表
+            loadRentedRooms();
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('addRentalModal'));
+            modal.show();
+        }
+
+        // 加载已出租房间列表
+        function loadRentedRooms() {
+            const roomSelect = document.getElementById('roomNumber');
+
+            // 清空现有选项，保留默认选项
+            roomSelect.innerHTML = '<option value="">请选择已出租房间</option>';
+
+            fetch('/api/rented_rooms_new')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.rooms) {
+                        data.rooms.forEach(room => {
+                            const option = document.createElement('option');
+                            option.value = room.room_number;
+                            option.textContent = `${room.room_number} - ${room.room_type} (基础租金: ¥${room.base_rent})`;
+                            option.dataset.roomId = room.id;
+                            option.dataset.baseRent = room.base_rent;
+                            option.dataset.roomType = room.room_type;
+                            option.dataset.tenantName = room.tenant_name || '';
+                            option.dataset.deposit = room.deposit || 0;
+                            option.dataset.checkInDate = room.check_in_date || '';
+                            roomSelect.appendChild(option);
+                        });
+
+                        if (data.rooms.length === 0) {
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = '暂无已出租房间';
+                            option.disabled = true;
+                            roomSelect.appendChild(option);
+                        }
+                    } else {
+                        showMessage('加载房间列表失败: ' + (data.message || '未知错误'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading rented rooms:', error);
+                    showMessage('加载房间列表失败，请稍后重试', 'error');
+                });
+        }
+
+        // 房间选择变化事件
+        function setupRoomSelectHandler() {
+            const roomSelect = document.getElementById('roomNumber');
+            const monthlyRentInput = document.getElementById('monthlyRent');
+            const tenantNameInput = document.getElementById('tenantName');
+            const depositInput = document.getElementById('deposit');
+            const checkInDateInput = document.getElementById('checkInDate');
+
+            roomSelect.addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+
+                if (selectedOption.value && selectedOption.dataset.baseRent) {
+                    // 自动填充基础租金
+                    monthlyRentInput.value = selectedOption.dataset.baseRent;
+
+                    // 自动填充租客姓名
+                    if (selectedOption.dataset.tenantName) {
+                        tenantNameInput.value = selectedOption.dataset.tenantName;
+                    }
+
+                    // 自动填充押金
+                    if (selectedOption.dataset.deposit) {
+                        depositInput.value = selectedOption.dataset.deposit;
+                    }
+
+                    // 自动填充入住日期
+                    if (selectedOption.dataset.checkInDate) {
+                        checkInDateInput.value = selectedOption.dataset.checkInDate;
+                    }
+
+                    // 触发总费用计算
+                    const event = new Event('input', {bubbles: true});
+                    monthlyRentInput.dispatchEvent(event);
+                } else {
+                    monthlyRentInput.value = '';
+                    tenantNameInput.value = '';
+                    depositInput.value = '0';
+                    checkInDateInput.value = '';
+                }
+            });
+        }
+
+        // 查看租房详情
+        function viewRental(rentalId) {
+            const loading = showLoading();
+
+            // 获取租房详情
+            fetch(`/api/rental_new/${rentalId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading(loading);
+                    if (data.error) {
+                        showMessage('获取详情失败：' + data.error, 'error');
+                    } else {
+                        showRentalDetailModal(data);
+                    }
+                })
+                .catch(error => {
+                    hideLoading(loading);
+                    console.error('Error:', error);
+                    showMessage('获取详情失败，请稍后重试', 'error');
+                });
+        }
+
+        // 查看账单详情
+        function viewBill(rentalId, roomNumber) {
+            const modal = new bootstrap.Modal(document.getElementById('billModal'));
+            const modalBody = document.getElementById('billModalBody');
+            const modalTitle = document.getElementById('billModalLabel');
+
+            // 更新模态框标题
+            modalTitle.innerHTML = `<i class="fas fa-file-invoice"></i> ${roomNumber} 房间缴费账单`;
+
+            // 显示加载状态
+            modalBody.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在加载账单信息...</p>
+                </div>
+            `;
+
+            modal.show();
+
+            // 模拟获取账单数据（实际应该从后端API获取）
+            setTimeout(() => {
+                loadBillContent(rentalId, roomNumber);
+            }, 1000);
+        }
+
+        // 加载账单内容
+        function loadBillContent(rentalId, roomNumber) {
+            // 从后端API获取真实数据
+            fetch(`/api/rental_new/${rentalId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        const modalBody = document.getElementById('billModalBody');
+                        modalBody.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> 获取账单数据失败：${data.error}
+                        </div>
+                    `;
+                    } else {
+                        const billData = generateBillDataFromAPI(data);
+                        const modalBody = document.getElementById('billModalBody');
+                        modalBody.innerHTML = generateBillHTML(billData);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const modalBody = document.getElementById('billModalBody');
+                    modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 获取账单数据失败，请稍后重试
+                    </div>
+                `;
+                });
+        }
+
+        // 从API数据生成账单数据
+        function generateBillDataFromAPI(apiData) {
+            const currentDate = new Date();
+            const billMonth = currentDate.toLocaleDateString('zh-CN', {year: 'numeric', month: 'long'});
+
+            return {
+                rentalId: apiData.id,
+                roomNumber: apiData.room_number,
+                tenantName: apiData.tenant_name,
+                billMonth: billMonth,
+                billDate: currentDate.toLocaleDateString('zh-CN'),
+                monthlyRent: apiData.monthly_rent,
+                utilities: {
+                    water: apiData.water_fee || 0,
+                    electricity: apiData.electricity_fee || 0,
+                    waterUsage: apiData.water_usage || 0,
+                    electricityUsage: apiData.electricity_usage || 0,
+                    total: apiData.utilities_fee || 0
+                },
+                totalAmount: apiData.total_due,
+                paymentStatus: apiData.payment_status_text,
+                dueDate: new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('zh-CN'),
+                remarks: apiData.remarks,
+                createdAt: apiData.created_at,
+                updatedAt: apiData.updated_at
+            };
+        }
+
+        // 生成账单HTML
+        function generateBillHTML(billData) {
+            return `
+                <div class="bill-container" id="billContent">
+                    <!-- 账单头部 -->
+                    <div class="bill-header text-center mb-4">
+                        <h3 class="text-primary mb-1">
+                            <i class="fas fa-building"></i> 租房管理系统
+                        </h3>
+                        <h4 class="mb-3">缴费账单</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>房间号：</strong>${billData.roomNumber}</p>
+                                <p class="mb-1"><strong>租客姓名：</strong>${billData.tenantName}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>账单月份：</strong>${billData.billMonth}</p>
+                                <p class="mb-1"><strong>生成日期：</strong>${billData.billDate}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 费用明细 -->
+                    <div class="bill-details">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-list"></i> 费用明细
+                        </h5>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>费用项目</th>
+                                        <th class="text-end">金额（元）</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><i class="fas fa-home text-primary"></i> 月租金</td>
+                                        <td class="text-end">¥${billData.monthlyRent.toFixed(2)}</td>
+                                    </tr>
+                                    ${billData.utilities.water > 0 ? `
+                                    <tr>
+                                        <td><i class="fas fa-tint text-info"></i> 水费 (${billData.utilities.waterUsage.toFixed(2)}方)</td>
+                                        <td class="text-end">¥${billData.utilities.water.toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${billData.utilities.electricity > 0 ? `
+                                    <tr>
+                                        <td><i class="fas fa-bolt text-warning"></i> 电费 (${billData.utilities.electricityUsage.toFixed(2)}度)</td>
+                                        <td class="text-end">¥${billData.utilities.electricity.toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${(billData.utilities.total > 0 && billData.utilities.total !== (billData.utilities.water + billData.utilities.electricity)) ? `
+                                    <tr>
+                                        <td><i class="fas fa-bolt text-secondary"></i> 其他水电费</td>
+                                        <td class="text-end">¥${(billData.utilities.total - billData.utilities.water - billData.utilities.electricity).toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${billData.deposit > 0 ? `
+                                    <tr class="table-info">
+                                        <td><i class="fas fa-piggy-bank text-info"></i> 押金</td>
+                                        <td class="text-end">¥${billData.deposit.toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                </tbody>
+                                <tfoot class="table-primary">
+                                    <tr>
+                                        <th><i class="fas fa-calculator"></i> 应缴总额</th>
+                                        <th class="text-end">¥${billData.totalAmount.toFixed(2)}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 缴费信息 -->
+                    <div class="bill-payment-info mt-4">
+                        <h5 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-credit-card"></i> 缴费信息
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert ${billData.paymentStatus === '已缴费' ? 'alert-success' : 'alert-warning'}" role="alert">
+                                    <i class="fas ${billData.paymentStatus === '已缴费' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                                    <strong>缴费状态：</strong>${billData.paymentStatus}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info" role="alert">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <strong>缴费截止日期：</strong>${billData.dueDate}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 备注信息 -->
+                    ${billData.remarks ? `
+                    <div class="bill-remarks mt-4">
+                        <h6 class="text-muted">
+                            <i class="fas fa-sticky-note"></i> 备注信息
+                        </h6>
+                        <div class="alert alert-light">
+                            ${billData.remarks}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- 记录信息 -->
+                    <div class="bill-record-info mt-4">
+                        <h6 class="text-muted">
+                            <i class="fas fa-clock"></i> 记录信息
+                        </h6>
+                        <div class="row text-muted small">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>创建时间：</strong>${billData.createdAt}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>更新时间：</strong>${billData.updatedAt}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 温馨提示 -->
+                    <div class="bill-notes mt-4">
+                        <h6 class="text-muted">
+                            <i class="fas fa-info-circle"></i> 温馨提示
+                        </h6>
+                        <ul class="text-muted small">
+                            <li>请在截止日期前完成缴费，逾期可能产生滞纳金</li>
+                            <li>如有疑问，请及时联系房东或管理员</li>
+                            <li>缴费后请保留相关凭证</li>
+                            <li>水费单价：3.5元/方，电费单价：1.2元/度</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 编辑租房记录
+        function editRental(rentalId) {
+            const loading = showLoading();
+
+            // 获取租房记录详情
+            fetch(`/api/rental_new/${rentalId}`)
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading(loading);
+                    if (data.error) {
+                        showMessage('获取租房信息失败：' + data.error, 'error');
+                        return;
+                    }
+                    showEditRentalModal(data);
+                })
+                .catch(error => {
+                    hideLoading(loading);
+                    console.error('Error:', error);
+                    showMessage('获取租房信息失败，请稍后重试', 'error');
+                });
+        }
+
+        // 显示编辑租房记录模态框
+        function showEditRentalModal(data) {
+            // 创建编辑模态框（如果不存在）
+            let editModal = document.getElementById('editRentalModal');
+            if (!editModal) {
+                editModal = document.createElement('div');
+                editModal.className = 'modal fade';
+                editModal.id = 'editRentalModal';
+                editModal.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning text-dark">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-edit"></i> 编辑租房记录
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editRentalForm">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editRoomNumber" class="form-label">房间号 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="editRoomNumber" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editTenantName" class="form-label">租客姓名 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="editTenantName" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editDeposit" class="form-label">押金 (元) <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="editDeposit" step="0.01" min="0" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editMonthlyRent" class="form-label">月租金 (元) <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" id="editMonthlyRent" step="0.01" min="0" required>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editWaterUsage" class="form-label">用水量 (方)</label>
+                                            <input type="number" class="form-control" id="editWaterUsage" step="0.1" min="0" placeholder="输入用水量">
+                                            <small class="form-text text-muted">水费单价：3.5元/方，系统将自动计算费用</small>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editElectricityUsage" class="form-label">用电量 (度)</label>
+                                            <input type="number" class="form-control" id="editElectricityUsage" step="0.1" min="0" placeholder="输入用电量">
+                                            <small class="form-text text-muted">电费单价：1.2元/度，系统将自动计算费用</small>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editPaymentStatus" class="form-label">缴费状态</label>
+                                            <select class="form-select" id="editPaymentStatus">
+                                                <option value="1">已缴费</option>
+                                                <option value="2">未缴费</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="editTotalDue" class="form-label">应缴费总额 (元)</label>
+                                            <input type="number" class="form-control" id="editTotalDue" step="0.01" min="0" readonly>
+                                            <small class="form-text text-muted">自动计算：月租金 + (用水量×3.5) + (用电量×1.2)</small>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editRemarks" class="form-label">备注</label>
+                                        <textarea class="form-control" id="editRemarks" rows="3" placeholder="请输入备注信息（可选）"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> 取消
+                                </button>
+                                <button type="button" class="btn btn-warning" onclick="updateRental()">
+                                    <i class="fas fa-save"></i> 保存修改
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(editModal);
+
+                // 添加实时计算功能
+                const monthlyRentInput = document.getElementById('editMonthlyRent');
+                const waterUsageInput = document.getElementById('editWaterUsage');
+                const electricityUsageInput = document.getElementById('editElectricityUsage');
+                const totalDueInput = document.getElementById('editTotalDue');
+
+                function calculateEditTotalDue() {
+                    const monthlyRent = parseFloat(monthlyRentInput.value) || 0;
+                    const waterUsage = parseFloat(waterUsageInput.value) || 0;
+                    const electricityUsage = parseFloat(electricityUsageInput.value) || 0;
+
+                    const waterFee = waterUsage * 3.5;
+                    const electricityFee = electricityUsage * 1.2;
+                    const totalDue = monthlyRent + waterFee + electricityFee;
+
+                    totalDueInput.value = totalDue.toFixed(2);
+                }
+
+                monthlyRentInput.addEventListener('input', calculateEditTotalDue);
+                waterUsageInput.addEventListener('input', calculateEditTotalDue);
+                electricityUsageInput.addEventListener('input', calculateEditTotalDue);
+            }
+
+            // 填充表单数据
+            document.getElementById('editRoomNumber').value = data.room_number;
+            document.getElementById('editTenantName').value = data.tenant_name;
+            document.getElementById('editDeposit').value = data.deposit;
+            document.getElementById('editMonthlyRent').value = data.monthly_rent;
+
+            // 根据当前水费和电费反推用量
+            const waterUsage = data.water_fee / 3.5;
+            const electricityUsage = data.electricity_fee / 1.2;
+            document.getElementById('editWaterUsage').value = waterUsage > 0 ? waterUsage.toFixed(1) : '';
+            document.getElementById('editElectricityUsage').value = electricityUsage > 0 ? electricityUsage.toFixed(1) : '';
+
+            document.getElementById('editPaymentStatus').value = data.payment_status;
+            document.getElementById('editTotalDue').value = data.total_due;
+            document.getElementById('editRemarks').value = data.remarks || '';
+
+            // 保存当前编辑的租房记录ID
+            editModal.setAttribute('data-rental-id', data.id);
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(editModal);
+            modal.show();
+        }
+
+        // 更新租房记录
+        function updateRental() {
+            const editModal = document.getElementById('editRentalModal');
+            const rentalId = editModal.getAttribute('data-rental-id');
+
+            // 获取表单数据
+            const formData = {
+                room_number: document.getElementById('editRoomNumber').value.trim(),
+                tenant_name: document.getElementById('editTenantName').value.trim(),
+                deposit: parseFloat(document.getElementById('editDeposit').value) || 0,
+                monthly_rent: parseFloat(document.getElementById('editMonthlyRent').value) || 0,
+                payment_status: parseInt(document.getElementById('editPaymentStatus').value),
+                remarks: document.getElementById('editRemarks').value.trim()
+            };
+
+            // 计算水费和电费
+            const waterUsage = parseFloat(document.getElementById('editWaterUsage').value) || 0;
+            const electricityUsage = parseFloat(document.getElementById('editElectricityUsage').value) || 0;
+
+            formData.water_fee = waterUsage * 3.5;
+            formData.electricity_fee = electricityUsage * 1.2;
+            formData.utilities_fee = formData.water_fee + formData.electricity_fee;
+            formData.total_due = formData.monthly_rent + formData.utilities_fee;
+
+            // 表单验证
+            if (!formData.room_number) {
+                showMessage('请输入房间号', 'warning');
+                return;
+            }
+            if (!formData.tenant_name) {
+                showMessage('请输入租客姓名', 'warning');
+                return;
+            }
+            if (formData.deposit < 0) {
+                showMessage('押金不能为负数', 'warning');
+                return;
+            }
+            if (formData.monthly_rent <= 0) {
+                showMessage('月租金必须大于0', 'warning');
+                return;
+            }
+
+            const loading = showLoading();
+
+            // 发送更新请求
+            fetch(`/api/rental_new/${rentalId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading(loading);
+                    if (data.success) {
+                        showMessage(`房间 ${formData.room_number} 的租房记录已更新`, 'success');
+
+                        // 关闭模态框
+                        const modal = bootstrap.Modal.getInstance(editModal);
+                        modal.hide();
+
+                        // 刷新页面
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showMessage('更新失败：' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading(loading);
+                    console.error('Error:', error);
+                    showMessage('更新失败，请稍后重试', 'error');
+                });
+        }
+
+        // 显示标记已缴费模态框
+        function showMarkAsPaidModal(rentalId, roomNumber, tenantName, totalDue) {
+            const modal = new bootstrap.Modal(document.getElementById('markAsPaidModal'));
+            const modalBody = document.getElementById('markAsPaidModalBody');
+            const confirmBtn = document.getElementById('confirmMarkAsPaidBtn');
+
+            // 填充模态框内容
+            modalBody.innerHTML = `
+                <div class="text-center mb-4">
+                    <i class="fas fa-money-bill-wave text-success" style="font-size: 3rem;"></i>
+                </div>
+                <div class="payment-info">
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>房间号：</strong></div>
+                        <div class="col-sm-8">${roomNumber}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>租客姓名：</strong></div>
+                        <div class="col-sm-8">${tenantName}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>应缴费用：</strong></div>
+                        <div class="col-sm-8 text-success"><strong>¥${parseFloat(totalDue).toFixed(2)}</strong></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>缴费日期：</strong></div>
+                        <div class="col-sm-8">${new Date().toLocaleDateString('zh-CN')}</div>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 确认后将标记该房间为已缴费状态，此操作可以撤销。
+                </div>
+            `;
+
+            // 显示模态框
+            modal.show();
+
+            // 设置确认按钮的点击事件
+            confirmBtn.onclick = function () {
+                markAsPaid(rentalId, roomNumber, modal);
+            };
+        }
+
+        // 标记为已缴费
+        function markAsPaid(rentalId, roomNumber, modal = null) {
+            const loading = showLoading();
+
+            // 如果有模态框，先关闭它
+            if (modal) {
+                modal.hide();
+            }
+
+            // 发送更新请求
+            fetch(`/rental_new/${rentalId}/mark_paid`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    hideLoading(loading);
+                    if (data.success) {
+                        showMessage(`房间 ${roomNumber} 已成功标记为已缴费`, 'success');
+                        // 找到对应的行并高亮显示
+                        const row = document.querySelector(`[data-search*="${roomNumber}"]`);
+                        if (row) {
+                            highlightRow(row);
+                        }
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showMessage('标记失败：' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    hideLoading(loading);
+                    console.error('Error:', error);
+                    showMessage('标记失败，请稍后重试', 'error');
+                });
+        }
+
+        // 删除租房记录
+        function deleteRental(rentalId, roomNumber) {
+            // 创建删除确认模态框（如果不存在）
+            let deleteModal = document.getElementById('deleteRentalModal');
+            if (!deleteModal) {
+                deleteModal = document.createElement('div');
+                deleteModal.className = 'modal fade';
+                deleteModal.id = 'deleteRentalModal';
+                deleteModal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-exclamation-triangle"></i> 删除确认
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="deleteRentalModalBody">
+                                <!-- 内容将通过JavaScript填充 -->
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> 取消
+                                </button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                                    <i class="fas fa-trash"></i> 确认删除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(deleteModal);
+            }
+
+            // 填充删除确认内容
+            const deleteModalBody = document.getElementById('deleteRentalModalBody');
+            deleteModalBody.innerHTML = `
+                <div class="text-center mb-4">
+                    <i class="fas fa-trash text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p class="text-center">您确定要删除房间 <strong class="text-danger">${roomNumber}</strong> 的租房记录吗？</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle"></i> 警告：此操作不可恢复！所有相关的租房信息将被永久删除。
+                </div>
+            `;
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(deleteModal);
+            modal.show();
+
+            // 设置确认删除按钮的点击事件
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            confirmDeleteBtn.onclick = function () {
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(deleteModal);
+                modal.hide();
+
+                const loading = showLoading();
+
+                // 发送删除请求
+                fetch(`/api/rental_new/${rentalId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        hideLoading(loading);
+                        if (data.success) {
+                            showMessage(`房间 ${roomNumber} 的租房记录已删除`, 'success');
+                            // 找到对应的行并添加删除动画
+                            const row = document.querySelector(`[data-search*="${roomNumber}"]`);
+                            if (row) {
+                                row.style.animation = 'fadeOut 0.5s ease-out forwards';
+                                setTimeout(() => location.reload(), 500);
+                            } else {
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        } else {
+                            showMessage('删除失败：' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        hideLoading(loading);
+                        console.error('Error:', error);
+                        showMessage('删除失败，请稍后重试', 'error');
+                    });
+            }
+        }
+
+        // 当前查看的租房记录ID
+        let currentRentalId = null;
+
+        // 显示租房详情模态框
+        function showRentalDetailModal(data) {
+            // 保存当前查看的租房记录ID
+            currentRentalId = data.id;
+
+            // 创建详情模态框（如果不存在）
+            let detailModal = document.getElementById('rentalDetailModal');
+            if (!detailModal) {
+                detailModal = document.createElement('div');
+                detailModal.className = 'modal fade';
+                detailModal.id = 'rentalDetailModal';
+                detailModal.innerHTML = `
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-info-circle"></i> 租房详情
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body" id="rentalDetailBody">
+                                <!-- 内容将通过JavaScript填充 -->
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times"></i> 关闭
+                                </button>
+                                <button type="button" class="btn btn-warning" onclick="editRentalFromDetail()">
+                                    <i class="fas fa-edit"></i> 编辑
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(detailModal);
+            }
+
+            // 填充详情内容
+            const detailBody = document.getElementById('rentalDetailBody');
+            detailBody.innerHTML = generateRentalDetailHTML(data);
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(detailModal);
+            modal.show();
+        }
+
+        // 从详情页面编辑租房记录
+        function editRentalFromDetail() {
+            if (currentRentalId) {
+                editRental(currentRentalId);
+            }
+        }
+
+        // 生成租房详情HTML
+        function generateRentalDetailHTML(data) {
+            return `
+                <div class="rental-detail-container">
+                    <div class="row">
+                        <!-- 基本信息 -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <i class="fas fa-info-circle"></i> 基本信息
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>房间号：</strong></td>
+                                            <td><span class="badge bg-primary">${data.room_number}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>租客姓名：</strong></td>
+                                            <td>${data.tenant_name}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>缴费状态：</strong></td>
+                                            <td>
+                                                <span class="badge ${data.payment_status === 1 ? 'bg-success' : 'bg-danger'}">
+                                                    <i class="fas ${data.payment_status === 1 ? 'fa-check' : 'fa-times'}"></i>
+                                                    ${data.payment_status_text}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 费用信息 -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-money-bill"></i> 费用信息
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>押金：</strong></td>
+                                            <td class="text-success">¥${data.deposit.toFixed(2)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>月租金：</strong></td>
+                                            <td class="text-info">¥${data.monthly_rent.toFixed(2)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>水电费：</strong></td>
+                                            <td class="text-warning">¥${data.utilities_fee.toFixed(2)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>应缴费：</strong></td>
+                                            <td class="text-danger"><strong>¥${data.total_due.toFixed(2)}</strong></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 其他信息 -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-secondary text-white">
+                                    <i class="fas fa-sticky-note"></i> 其他信息
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>备注：</strong></td>
+                                            <td>${data.remarks || '无'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>创建时间：</strong></td>
+                                            <td>${data.created_at}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>更新时间：</strong></td>
+                                            <td>${data.updated_at}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 打印账单
+        function printBill() {
+            const billContent = document.getElementById('billContent');
+            if (!billContent) {
+                alert('请先查看账单内容');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>缴费账单</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+            <style>
+                @media print {
+                    body { margin: 0; }
+                    .bill-container { padding: 20px; }
+                }
+            </style>
+        </head>
+        <body>
+            ${billContent.outerHTML}
+            <script>
+                window.onload = function() {
+                    window.print();
+                    window.close();
+                }
+            <\/script>
+        </body>
+        </html>
+    `);
+            printWindow.document.close();
+        }
+
+        // 下载账单PDF
+        function downloadBillPDF() {
+            const billContent = document.getElementById('billContent');
+            if (!billContent) {
+                showMessage('请先查看账单内容', 'warning');
+                return;
+            }
+
+            // 显示加载提示
+            const loading = showLoading();
+            showMessage('正在生成PDF，请稍候...', 'info');
+
+            // 使用html2canvas + jsPDF的方案来支持中文
+            loadLibrariesAndGenerate();
+
+            function loadLibrariesAndGenerate() {
+                let scriptsLoaded = 0;
+                const totalScripts = 2;
+
+                function checkAllLoaded() {
+                    scriptsLoaded++;
+                    if (scriptsLoaded === totalScripts) {
+                        generatePDFFromHTML();
+                    }
+                }
+
+                // 加载html2canvas
+                if (typeof window.html2canvas === 'undefined') {
+                    const html2canvasScript = document.createElement('script');
+                    html2canvasScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                    html2canvasScript.onload = checkAllLoaded;
+                    html2canvasScript.onerror = function () {
+                        hideLoading(loading);
+                        showMessage('html2canvas库加载失败，使用备用方案', 'warning');
+                        fallbackToPrint();
+                    };
+                    document.head.appendChild(html2canvasScript);
+                } else {
+                    checkAllLoaded();
+                }
+
+                // 加载jsPDF
+                if (typeof window.jsPDF === 'undefined') {
+                    const jsPDFScript = document.createElement('script');
+                    jsPDFScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                    jsPDFScript.onload = checkAllLoaded;
+                    jsPDFScript.onerror = function () {
+                        hideLoading(loading);
+                        showMessage('jsPDF库加载失败，使用备用方案', 'warning');
+                        fallbackToPrint();
+                    };
+                    document.head.appendChild(jsPDFScript);
+                } else {
+                    checkAllLoaded();
+                }
+            }
+
+            function generatePDFFromHTML() {
+                try {
+                    // 创建一个临时的打印样式容器
+                    const printContainer = document.createElement('div');
+                    printContainer.style.cssText = `
+                        position: absolute;
+                        top: -9999px;
+                        left: -9999px;
+                        width: 210mm;
+                        background: white;
+                        padding: 20px;
+                        font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
+                        font-size: 14px;
+                        line-height: 1.6;
+                        color: #333;
+                    `;
+
+                    // 复制账单内容并优化样式
+                    const billClone = billContent.cloneNode(true);
+
+                    // 移除不需要的按钮
+                    const buttons = billClone.querySelectorAll('button');
+                    buttons.forEach(btn => btn.remove());
+
+                    // 优化样式
+                    billClone.style.cssText = `
+                        background: white;
+                        padding: 0;
+                        margin: 0;
+                        box-shadow: none;
+                        border: none;
+                        font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
+                    `;
+
+                    // 设置标题样式
+                    const headers = billClone.querySelectorAll('h3, h4, h5');
+                    headers.forEach(h => {
+                        h.style.cssText = 'color: #333; margin: 10px 0; font-weight: bold;';
+                    });
+
+                    // 设置表格样式
+                    const tables = billClone.querySelectorAll('table');
+                    tables.forEach(table => {
+                        table.style.cssText = 'width: 100%; border-collapse: collapse; margin: 10px 0;';
+                        const cells = table.querySelectorAll('td, th');
+                        cells.forEach(cell => {
+                            cell.style.cssText = 'padding: 8px; border: 1px solid #ddd; text-align: left;';
+                        });
+                    });
+
+                    printContainer.appendChild(billClone);
+                    document.body.appendChild(printContainer);
+
+                    // 使用html2canvas转换为图片
+                    html2canvas(printContainer, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        width: printContainer.scrollWidth,
+                        height: printContainer.scrollHeight
+                    }).then(canvas => {
+                        // 移除临时容器
+                        document.body.removeChild(printContainer);
+
+                        const {jsPDF} = window.jspdf;
+                        const pdf = new jsPDF({
+                            orientation: 'portrait',
+                            unit: 'mm',
+                            format: 'a4'
+                        });
+
+                        // 计算图片尺寸
+                        const imgWidth = 210; // A4宽度
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                        // 添加图片到PDF
+                        const imgData = canvas.toDataURL('image/png');
+                        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+                        // 生成文件名
+                        const roomNumber = document.querySelector('.bill-header .room-info')?.textContent?.match(/房间号：(\S+)/)?.[1] || 'unknown';
+                        const billDate = new Date().toLocaleDateString('zh-CN').replace(/\//g, '');
+                        const fileName = `租房账单_${roomNumber}_${billDate}.pdf`;
+
+                        // 下载PDF
+                        pdf.save(fileName);
+
+                        hideLoading(loading);
+                        showMessage('PDF下载成功！', 'success');
+
+                    }).catch(error => {
+                        document.body.removeChild(printContainer);
+                        console.error('Canvas生成失败:', error);
+                        hideLoading(loading);
+                        showMessage('PDF生成失败，使用备用方案', 'warning');
+                        fallbackToPrint();
+                    });
+
+                } catch (error) {
+                    hideLoading(loading);
+                    console.error('PDF生成失败:', error);
+                    showMessage('PDF生成失败，使用备用方案', 'warning');
+                    fallbackToPrint();
+                }
+            }
+
+            function fallbackToPrint() {
+                setTimeout(() => {
+                    printBill();
+                }, 1000);
+            }
+        }
+
+        // 初始化日期筛选器
+        function initDateFilter() {
+            const yearFilter = document.getElementById('yearFilter');
+            const monthFilter = document.getElementById('monthFilter');
+
+            // 从后端传递的数据中获取最早日期
+            const earliestDate = new Date('{{ earliest_date.strftime("%Y-%m-%d") if earliest_date else "2020-01-01" }}');
+            const currentDate = new Date();
+
+            // 填充年份选项
+            populateYearOptions(yearFilter, earliestDate.getFullYear(), currentDate.getFullYear());
+
+            // 设置当前选中的年月（如果有的话）
+            const currentYear = {{ current_year if current_year else 'null' }};
+            const currentMonth = {{ current_month if current_month else 'null' }};
+
+            if (currentYear) {
+                yearFilter.value = currentYear;
+                yearFilter.classList.add('date-filter-active');
+            }
+            if (currentMonth) {
+                monthFilter.value = currentMonth;
+                monthFilter.classList.add('date-filter-active');
+            }
+
+            // 显示当前筛选信息
+            updateDateFilterInfo(currentYear, currentMonth);
+
+            // 添加事件监听器
+            yearFilter.addEventListener('change', handleDateFilterChange);
+            monthFilter.addEventListener('change', handleDateFilterChange);
+        }
+
+        // 填充年份选项
+        function populateYearOptions(yearSelect, startYear, endYear) {
+            for (let year = endYear; year >= startYear; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year + '年';
+                yearSelect.appendChild(option);
+            }
+        }
+
+        // 处理日期筛选变化
+        function handleDateFilterChange() {
+            const yearFilter = document.getElementById('yearFilter');
+            const monthFilter = document.getElementById('monthFilter');
+            const year = yearFilter.value;
+            const month = monthFilter.value;
+
+            // 更新筛选器样式
+            updateFilterStyle(yearFilter, year);
+            updateFilterStyle(monthFilter, month);
+
+            // 如果年份和月份都选择了，则进行筛选
+            if (year && month) {
+                applyDateFilter(year, month);
+            } else if (!year && !month) {
+                // 如果都清空了，则显示全部数据
+                clearDateFilter();
+            }
+        }
+
+        // 更新筛选器样式
+        function updateFilterStyle(element, value) {
+            if (value) {
+                element.classList.add('date-filter-active');
+            } else {
+                element.classList.remove('date-filter-active');
+            }
+        }
+
+        // 应用日期筛选
+        function applyDateFilter(year, month) {
+            showMessage('正在筛选数据...', 'info');
+
+            // 构建URL参数
+            const url = new URL(window.location.href);
+            url.searchParams.set('year', year);
+            url.searchParams.set('month', month);
+
+            // 重新加载页面
+            window.location.href = url.toString();
+        }
+
+        // 清除日期筛选
+        function clearDateFilter() {
+            const yearFilter = document.getElementById('yearFilter');
+            const monthFilter = document.getElementById('monthFilter');
+
+            // 清空选择
+            yearFilter.value = '';
+            monthFilter.value = '';
+
+            // 移除样式
+            yearFilter.classList.remove('date-filter-active');
+            monthFilter.classList.remove('date-filter-active');
+
+            // 移除URL参数
+            const url = new URL(window.location.href);
+            url.searchParams.delete('year');
+            url.searchParams.delete('month');
+
+            showMessage('正在显示全部数据...', 'info');
+
+            // 重新加载页面
+            window.location.href = url.toString();
+        }
+
+        // 更新日期筛选信息显示
+        function updateDateFilterInfo(year, month) {
+            const dateFilterInfo = document.getElementById('dateFilterInfo');
+            const dateFilterText = document.getElementById('dateFilterText');
+
+            if (year && month) {
+                const monthNames = ['', '一月', '二月', '三月', '四月', '五月', '六月',
+                    '七月', '八月', '九月', '十月', '十一月', '十二月'];
+                dateFilterText.textContent = `正在显示 ${year}年${monthNames[month]} 的数据`;
+                dateFilterInfo.style.display = 'block';
+            } else {
+                dateFilterInfo.style.display = 'none';
+            }
+        }
+
+        // 导出当前筛选的数据（可以扩展现有的导出功能）
+        function exportFilteredData() {
+            const currentYear = {{ current_year if current_year else 'null' }};
+            const currentMonth = {{ current_month if current_month else 'null' }};
+
+            if (currentYear && currentMonth) {
+                const monthNames = ['', '一月', '二月', '三月', '四月', '五月', '六月',
+                    '七月', '八月', '九月', '十月', '十一月', '十二月'];
+                showMessage(`正在导出 ${currentYear}年${monthNames[currentMonth]} 的数据...`, 'info');
+                // 这里可以添加具体的导出逻辑
+                exportBills('filtered');
+            } else {
+                showMessage('请先选择要导出的年月', 'warning');
+            }
+        }
+
+        // 快速跳转到特定月份
+        function jumpToMonth(year, month) {
+            const yearFilter = document.getElementById('yearFilter');
+            const monthFilter = document.getElementById('monthFilter');
+
+            yearFilter.value = year;
+            monthFilter.value = month;
+
+            applyDateFilter(year, month);
+        }
+
+        // 跳转到当前月份
+        function jumpToCurrentMonth() {
+            const now = new Date();
+            jumpToMonth(now.getFullYear(), now.getMonth() + 1);
+        }
+
+        // 跳转到上个月
+        function jumpToPreviousMonth() {
+            const currentYear = {{ current_year if current_year else 'null' }};
+            const currentMonth = {{ current_month if current_month else 'null' }};
+
+            if (currentYear && currentMonth) {
+                let prevYear = currentYear;
+                let prevMonth = currentMonth - 1;
+
+                if (prevMonth === 0) {
+                    prevMonth = 12;
+                    prevYear = prevYear - 1;
+                }
+
+                jumpToMonth(prevYear, prevMonth);
+            } else {
+                showMessage('请先选择当前月份', 'warning');
+            }
+        }
+
+        // 跳转到下个月
+        function jumpToNextMonth() {
+            const currentYear = {{ current_year if current_year else 'null' }};
+            const currentMonth = {{ current_month if current_month else 'null' }};
+
+            if (currentYear && currentMonth) {
+                let nextYear = currentYear;
+                let nextMonth = currentMonth + 1;
+
+                if (nextMonth === 13) {
+                    nextMonth = 1;
+                    nextYear = nextYear + 1;
+                }
+
+                jumpToMonth(nextYear, nextMonth);
+            } else {
+                showMessage('请先选择当前月份', 'warning');
+            }
+        }
+    </script>
+{% endblock %}

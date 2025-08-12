@@ -1,0 +1,1469 @@
+/* 全局字体和基础样式 */
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 基础字体大小调整 */
+body {
+    font-size: 16px;
+}
+
+.container-fluid {
+    font-size: 16px;
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="%23ffffff" opacity="0.05"/><circle cx="75" cy="75" r="1" fill="%23ffffff" opacity="0.05"/><circle cx="50" cy="10" r="0.5" fill="%23ffffff" opacity="0.03"/><circle cx="80" cy="40" r="0.5" fill="%23ffffff" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+    z-index: -1;
+}
+
+.container-fluid {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    margin: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 优雅的动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* 统计卡片美化 */
+.room-stats-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out both;
+}
+
+.room-stats-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.room-stats-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.room-stats-card.bg-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+}
+
+.room-stats-card.bg-success {
+    background: linear-gradient(135deg, #48bb78, #38a169) !important;
+}
+
+.room-stats-card.bg-warning {
+    background: linear-gradient(135deg, #f093fb, #f5576c) !important;
+}
+
+.room-stats-card.bg-danger {
+    background: linear-gradient(135deg, #fa709a, #fee140) !important;
+}
+
+.room-stats-card .card-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.room-stats-card .card-text {
+    font-weight: 500;
+    opacity: 0.9;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.room-stats-card .fas {
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.room-stats-card:hover .fas {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-10px) rotate(2deg);
+    }
+}
+
+/* 操作栏卡片美化 */
+.card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.6s ease-out both;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border: none;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 30px;
+}
+
+.card-body {
+    padding: 30px;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0;
+    font-size: 1.3rem;
+}
+
+/* 按钮美化 */
+.btn {
+    border-radius: 15px;
+    padding: 14px 30px;
+    font-weight: 500;
+    font-size: 1.1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.btn-outline-secondary {
+    border: 2px solid #e2e8f0;
+    color: #4a5568;
+    background: white;
+}
+
+.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, #718096, #4a5568);
+    border-color: #718096;
+    color: white;
+}
+
+/* 搜索和筛选区域美化 */
+.form-control, .form-select {
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    padding: 14px 18px;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+}
+
+.input-group-text {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    border-radius: 12px 0 0 12px;
+}
+
+/* 表格美化 */
+.table-responsive {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+    margin-bottom: 0;
+    background: white;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #2d3748, #4a5568);
+    border: none;
+    padding: 22px 18px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 1rem;
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.table tbody tr:hover {
+    background: linear-gradient(135deg, #f8fafc, #edf2f7);
+    border-left-color: #667eea;
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.table tbody td {
+    padding: 22px 18px;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-size: 1.05rem;
+}
+
+/* 房号美化 */
+.text-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* 徽章美化 */
+.badge {
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #4299e1, #3182ce) !important;
+    box-shadow: 0 3px 10px rgba(66, 153, 225, 0.3);
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #48bb78, #38a169) !important;
+    box-shadow: 0 3px 10px rgba(72, 187, 120, 0.3);
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ed8936, #dd6b20) !important;
+    box-shadow: 0 3px 10px rgba(237, 137, 54, 0.3);
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #f56565, #e53e3e) !important;
+    box-shadow: 0 3px 10px rgba(245, 101, 101, 0.3);
+}
+
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #718096, #4a5568) !important;
+    box-shadow: 0 3px 10px rgba(113, 128, 150, 0.3);
+}
+
+/* 金额美化 */
+.text-success {
+    color: #48bb78 !important;
+    font-weight: 700;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 1.05rem;
+}
+
+/* 房间号容器美化 */
+.room-number-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.room-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 25px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.room-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.room-badge:hover::before {
+    left: 100%;
+}
+
+.room-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.room-number {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* 房型徽章美化 */
+.room-type-container {
+    display: flex;
+    justify-content: center;
+}
+
+.room-type-badge {
+    transition: all 0.3s ease;
+}
+
+.room-type-badge:hover {
+    transform: scale(1.1);
+}
+
+/* 租金显示美化 */
+.rent-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(72, 187, 120, 0.1);
+    border: 1px solid rgba(72, 187, 120, 0.2);
+    transition: all 0.3s ease;
+}
+
+.rent-display:hover {
+    background: rgba(72, 187, 120, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.2);
+}
+
+.rent-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.rent-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.currency {
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #48bb78;
+}
+
+/* 押金显示美化 */
+.deposit-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+}
+
+.deposit-display:hover {
+    background: rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.deposit-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.deposit-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.deposit-currency {
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.deposit-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+/* 电表水表信息美化 */
+.meter-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.meter-info.water-meter {
+    background: rgba(56, 178, 172, 0.1);
+    border: 1px solid rgba(56, 178, 172, 0.2);
+}
+
+.meter-info.electricity-meter {
+    background: rgba(237, 137, 54, 0.1);
+    border: 1px solid rgba(237, 137, 54, 0.2);
+}
+
+.meter-info:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.meter-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+
+.water-meter .meter-icon {
+    background: linear-gradient(135deg, #38b2ac, #319795);
+}
+
+.electricity-meter .meter-icon {
+    background: linear-gradient(135deg, #ed8936, #dd6b20);
+}
+
+.meter-number {
+    background: transparent;
+    color: inherit;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.water-meter .meter-number {
+    color: #38b2ac;
+}
+
+.electricity-meter .meter-number {
+    color: #ed8936;
+}
+
+/* 日期信息美化 */
+.date-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(113, 128, 150, 0.1);
+    border: 1px solid rgba(113, 128, 150, 0.2);
+    transition: all 0.3s ease;
+}
+
+.date-info:hover {
+    transform: translateY(-1px);
+    background: rgba(113, 128, 150, 0.15);
+}
+
+/* 创建时间样式 */
+.creation-time {
+    font-size: 0.85rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
+}
+
+.date-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #718096, #4a5568);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+
+.date-text {
+    color: #718096;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+/* 操作按钮容器美化 */
+.action-buttons-container {
+    display: flex;
+    justify-content: center;
+    padding: 5px;
+}
+
+.action-btn-grid {
+    display: flex;
+    gap: 6px;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.action-btn:hover::before {
+    width: 100px;
+    height: 100px;
+}
+
+.action-btn:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.action-btn:active {
+    transform: translateY(-1px) scale(1.05);
+}
+
+/* 按钮颜色主题 */
+.view-btn {
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    box-shadow: 0 3px 10px rgba(66, 153, 225, 0.3);
+}
+
+.view-btn:hover {
+    box-shadow: 0 8px 20px rgba(66, 153, 225, 0.4);
+}
+
+.edit-btn {
+    background: linear-gradient(135deg, #ed8936, #dd6b20);
+    box-shadow: 0 3px 10px rgba(237, 137, 54, 0.3);
+}
+
+.edit-btn:hover {
+    box-shadow: 0 8px 20px rgba(237, 137, 54, 0.4);
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+    box-shadow: 0 3px 10px rgba(245, 101, 101, 0.3);
+}
+
+.delete-btn:hover {
+    box-shadow: 0 8px 20px rgba(245, 101, 101, 0.4);
+}
+
+/* 操作按钮组美化 */
+.btn-group-sm .btn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin: 0 2px;
+}
+
+.btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: white;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: #667eea;
+    color: white;
+    transform: scale(1.05);
+}
+
+.btn-outline-warning {
+    border: 2px solid #ed8936;
+    color: #ed8936;
+    background: white;
+}
+
+.btn-outline-warning:hover {
+    background: linear-gradient(135deg, #ed8936, #dd6b20);
+    border-color: #ed8936;
+    color: white;
+    transform: scale(1.05);
+}
+
+.btn-outline-danger {
+    border: 2px solid #f56565;
+    color: #f56565;
+    background: white;
+}
+
+.btn-outline-danger:hover {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+    border-color: #f56565;
+    color: white;
+    transform: scale(1.05);
+}
+
+/* 空状态美化 */
+.text-muted i.fa-3x {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 模态框美化 */
+.modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.modal-header {
+    border-radius: 20px 20px 0 0;
+    border: none;
+    padding: 25px 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.modal-header.bg-danger {
+    background: linear-gradient(135deg, #f56565, #e53e3e) !important;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.modal-footer {
+    border: none;
+    padding: 20px 30px 30px;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 1.4rem;
+}
+
+/* 表单标签美化 */
+.form-label {
+    font-weight: 500;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+/* 警告框美化 */
+.alert {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, rgba(237, 137, 54, 0.1), rgba(221, 107, 32, 0.1));
+    border-left: 4px solid #ed8936;
+}
+
+/* 删除确认图标美化 */
+.fa-trash-alt.fa-3x {
+    background: linear-gradient(135deg, #f56565, #e53e3e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 面包屑导航美化 */
+.breadcrumb-container {
+    margin-bottom: 20px;
+}
+
+.breadcrumb {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    padding: 15px 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.breadcrumb-item a {
+    color: #667eea;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #5a67d8;
+    transform: translateX(3px);
+}
+
+.breadcrumb-item.active {
+    color: #2d3748;
+    font-weight: 500;
+}
+
+/* 响应式设计优化 */
+@media (max-width: 768px) {
+    .container-fluid {
+        margin: 10px;
+        padding: 20px;
+        border-radius: 15px;
+        font-size: 15px;
+    }
+
+    .room-stats-card {
+        margin-bottom: 15px;
+    }
+
+    .room-stats-card .card-title {
+        font-size: 2.5rem;
+    }
+
+    .room-stats-card .card-text {
+        font-size: 1.1rem;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .btn {
+        padding: 12px 22px;
+        font-size: 1rem;
+    }
+
+    .table-responsive {
+        border-radius: 15px;
+    }
+
+    .table tbody tr:hover {
+        transform: none;
+    }
+
+    .table tbody td {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 0.85rem;
+    }
+
+    /* 楼层筛选移动端优化 */
+    .floor-filter-tabs {
+        gap: 8px;
+        padding: 15px;
+    }
+
+    .floor-tab {
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        min-width: auto;
+    }
+
+    .floor-tab i {
+        display: none;
+    }
+
+    .floor-stats {
+        font-size: 0.8rem;
+        margin-left: 6px;
+        padding: 1px 6px;
+    }
+}
+
+/* 微动画效果 */
+.room-stats-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.room-stats-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.room-stats-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.room-stats-card:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+.card:not(.room-stats-card) {
+    animation-delay: 0.5s;
+}
+
+/* 楼层筛选标签样式 */
+.floor-filter-tabs {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.floor-tab {
+    padding: 12px 24px;
+    border: 2px solid transparent;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #4a5568;
+    font-weight: 500;
+    font-size: 1.05rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+}
+
+.floor-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.floor-tab:hover::before {
+    left: 100%;
+}
+
+.floor-tab:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.floor-tab.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.floor-tab.active:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+}
+
+/* 楼层统计显示 */
+.floor-stats {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.floor-tab.active .floor-stats {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+}
+
+/* 加载动画 */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* 成功提示美化 */
+.alert-success {
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(56, 161, 105, 0.1));
+    border-left: 4px solid #48bb78;
+    color: #2f855a;
+}
+
+/* 统计卡片样式 */
+.room-stats-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.room-stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.room-stats-card .card-body {
+    padding: 1.5rem;
+}
+
+.room-stats-card .card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.room-stats-card .card-text {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+/* 房间状态徽章样式 */
+.room-status-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.room-status-badge i {
+    font-size: 0.7rem;
+}
+
+/* 房间表格样式 */
+.rooms-table {
+    font-size: 0.9rem;
+}
+
+.rooms-table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.rooms-table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.rooms-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.rooms-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 房号样式 */
+.room-number {
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1.1rem;
+}
+
+/* 租金样式 */
+.room-rent {
+    font-weight: 600;
+    color: #28a745;
+    font-size: 1rem;
+}
+
+/* 房型标签样式 */
+.room-type-badge {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* 操作按钮组样式 */
+.room-actions {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.room-actions .btn {
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.room-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 搜索和筛选区域样式 */
+.search-filter-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.search-filter-section .input-group-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.search-filter-section .form-control,
+.search-filter-section .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.search-filter-section .form-control:focus,
+.search-filter-section .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* 模态框样式 */
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    border-bottom: none;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.modal-footer {
+    border-top: 1px solid #f1f3f4;
+    padding: 1rem 1.5rem;
+}
+
+/* 表单样式 */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control,
+.form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* 必填字段标识 */
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* 空状态样式 */
+.empty-state {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.empty-state i {
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state small {
+    color: #adb5bd;
+}
+
+/* 加载状态样式 */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 0.3rem solid #f3f3f3;
+    border-top: 0.3rem solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .room-stats-card .card-title {
+        font-size: 1.5rem;
+    }
+
+    .room-stats-card .card-text {
+        font-size: 0.8rem;
+    }
+
+    .rooms-table {
+        font-size: 0.8rem;
+    }
+
+    .rooms-table th,
+    .rooms-table td {
+        padding: 0.5rem 0.3rem;
+    }
+
+    .room-actions {
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .room-actions .btn {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem;
+    }
+
+    .search-filter-section {
+        padding: 1rem;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .room-stats-card {
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        border-radius: 8px;
+    }
+
+    .rooms-table th {
+        font-size: 0.7rem;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .rooms-table td {
+        padding: 0.75rem 0.25rem;
+    }
+
+    .room-number {
+        font-size: 1rem;
+    }
+
+    .room-type-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    .room-actions,
+    .search-filter-section,
+    .modal {
+        display: none !important;
+    }
+
+    .rooms-table {
+        font-size: 0.8rem;
+    }
+
+    .room-stats-card {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .search-filter-section {
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        color: #e2e8f0;
+    }
+
+    .rooms-table tbody tr:hover {
+        background-color: #2d3748;
+    }
+
+    .form-control,
+    .form-select {
+        background-color: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+
+    .modal-content {
+        background-color: #1a202c;
+        color: #e2e8f0;
+    }
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* 工具提示样式 */
+.tooltip-inner {
+    background-color: #667eea;
+    color: white;
+    border-radius: 6px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.tooltip.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #667eea;
+}
+
+.tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: #667eea;
+}
+
+.tooltip.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: #667eea;
+}
+
+.tooltip.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: #667eea;
+}

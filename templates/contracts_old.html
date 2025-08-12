@@ -1,0 +1,1202 @@
+{% extends "base_old.html" %}
+
+{% block title %}五楼管理 - 合同管理 - 租房管理系统{% endblock %}
+
+{% block page_title %}五楼管理 - 合同管理{% endblock %}
+
+{% block extra_css %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/contracts.css') }}">
+{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index5') }}"><i class="fas fa-building"></i>主页</a>
+                </li>
+                <li class="breadcrumb-item active">合同管理</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <!-- 统计概览卡片 -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-primary h-100 contract-stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ contract_stats.total_contracts if contract_stats else 0 }}</h4>
+                                <p class="card-text">总合同数</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-file-contract fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-success h-100 contract-stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ contract_stats.active_contracts if contract_stats else 0 }}</h4>
+                                <p class="card-text">有效合同</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-warning h-100 contract-stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ contract_stats.expiring_contracts if contract_stats else 0 }}</h4>
+                                <p class="card-text">即将到期</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card text-white bg-danger h-100 contract-stats-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">{{ contract_stats.expired_contracts if contract_stats else 0 }}</h4>
+                                <p class="card-text">已过期</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-times-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作栏 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-file-contract text-primary"></i>
+                                    合同管理
+                                </h5>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-primary me-2" data-bs-toggle="modal"
+                                        data-bs-target="#addContractModal">
+                                    <i class="fas fa-plus"></i> 新建合同
+                                </button>
+                                <button class="btn btn-outline-info me-2" onclick="exportContracts()">
+                                    <i class="fas fa-download"></i> 导出
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="refreshContractList()">
+                                    <i class="fas fa-sync-alt"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 搜索和筛选 -->
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="searchContract"
+                                           placeholder="搜索合同编号或租客姓名...">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="filterStatus">
+                                    <option value="">所有状态</option>
+                                    <option value="1">有效</option>
+                                    <option value="2">即将到期</option>
+                                    <option value="3">已过期</option>
+                                    <option value="4">已终止</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="filterRoom">
+                                    <option value="">所有房间</option>
+                                    {% if rooms_list %}
+                                        {% for room in rooms_list %}
+                                            <option value="{{ room.room_number }}">{{ room.room_number }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                    <input type="date" class="form-control" id="filterDate" placeholder="筛选日期">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-primary w-100" onclick="filterContracts()">
+                                    <i class="fas fa-filter"></i> 筛选
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 合同列表表格 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-list"></i>
+                            合同详细信息
+                            <span class="badge bg-secondary ms-2">共 {{ contracts_list|length if contracts_list else 0 }} 份合同</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped" id="contractsTable">
+                                <thead class="table-dark">
+                                <tr>
+                                    <th width="10%">合同编号</th>
+                                    <th width="8%">房号</th>
+                                    <th width="10%">租客姓名</th>
+                                    <th width="10%">月租金</th>
+                                    <th width="12%">合同期限</th>
+                                    <th width="10%">签约日期</th>
+                                    <th width="8%">状态</th>
+                                    <th width="12%">到期提醒</th>
+                                    <th width="20%">操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% if contracts_list %}
+                                    {% for contract in contracts_list %}
+                                        <tr data-contract-id="{{ contract.id }}" class="contract-row">
+                                            <td>
+                                                <strong class="text-primary contract-number">{{ contract.contract_number }}</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info room-badge">{{ contract.room_number }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="tenant-info">
+                                                    <strong>{{ contract.tenant_name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ contract.tenant_phone }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="text-success fw-bold rent-amount">¥{{ "%.2f"|format(contract.monthly_rent) }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="contract-period">
+                                                    <small class="text-muted">
+                                                        {{ contract.contract_start_date.strftime('%Y-%m-%d') if contract.contract_start_date else '-' }}
+                                                        <br>至<br>
+                                                        {{ contract.contract_end_date.strftime('%Y-%m-%d') if contract.contract_end_date else '-' }}
+                                                    </small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ contract.created_at.strftime('%Y-%m-%d') if contract.created_at else '-' }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if contract.contract_status == 1 %}
+                                                    <span class="badge bg-success contract-status">
+                                                        <i class="fas fa-check-circle"></i> 有效
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger contract-status">
+                                                        <i class="fas fa-times-circle"></i> 失效
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if contract.contract_end_date %}
+                                                    <div class="expiry-reminder">
+                                                        <small class="text-info">
+                                                            <i class="fas fa-calendar"></i>
+                                                            {{ contract.contract_end_date.strftime('%Y-%m-%d') }} 到期
+                                                        </small>
+                                                    </div>
+                                                {% else %}
+                                                    <small class="text-muted">-</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button type="button" class="btn btn-outline-primary"
+                                                            onclick="viewContract({{ contract.id }})" title="查看详情">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-info"
+                                                            onclick="downloadContract({{ contract.id }})"
+                                                            title="下载合同">
+                                                        <i class="fas fa-download"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-warning"
+                                                            onclick="editContract({{ contract.id }})" title="编辑">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            onclick="deleteContract({{ contract.id }})"
+                                                            title="删除合同">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center py-5">
+                                            <div class="text-muted empty-state">
+                                                <i class="fas fa-file-contract fa-4x mb-3"></i>
+                                                <h5>暂无合同数据</h5>
+                                                <p class="mb-3">还没有任何租赁合同记录</p>
+                                                <button class="btn btn-primary" data-bs-toggle="modal"
+                                                        data-bs-target="#addContractModal">
+                                                    <i class="fas fa-plus"></i> 创建第一份合同
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建合同模态框 -->
+    <div class="modal fade" id="addContractModal" tabindex="-1" aria-labelledby="addContractModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addContractModalLabel">
+                        <i class="fas fa-plus-circle"></i> 新建租赁合同
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form id="addContractForm">
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- 基本信息 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> 基本信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="contractNumber" class="form-label">合同编号 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="contractNumber"
+                                                   name="contract_number" required>
+                                            <div class="form-text">系统将自动生成唯一编号</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="roomSelect" class="form-label">房间号 <span
+                                                    class="text-danger">*</span></label>
+                                            <select class="form-select" id="roomSelect" name="room_number" required>
+                                                <option value="">请选择已出租的房间</option>
+                                                <!-- 动态加载已出租房间 -->
+                                            </select>
+                                            <div class="form-text">只显示当前已出租的房间</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="monthlyRent" class="form-label">月租金 (元) <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="number" step="0.01" class="form-control" id="monthlyRent"
+                                                   name="monthly_rent" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="deposit" class="form-label">押金 (元)</label>
+                                            <input type="number" step="0.01" class="form-control" id="deposit"
+                                                   name="deposit">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 租客信息 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-user"></i> 租客信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="tenantName" class="form-label">租客姓名 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="tenantName" name="tenant_name"
+                                                   required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tenantPhone" class="form-label">联系电话 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="tel" class="form-control" id="tenantPhone" name="tenant_phone"
+                                                   required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tenantIdCard" class="form-label">身份证号</label>
+                                            <input type="text" class="form-control" id="tenantIdCard"
+                                                   name="tenant_id_card">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="emergencyContact" class="form-label">紧急联系人</label>
+                                            <input type="text" class="form-control" id="emergencyContact"
+                                                   name="emergency_contact">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="emergencyPhone" class="form-label">紧急联系电话</label>
+                                            <input type="tel" class="form-control" id="emergencyPhone"
+                                                   name="emergency_phone">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- 合同期限 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calendar"></i> 合同期限</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="signDate" class="form-label">签约日期 <span class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="signDate" name="sign_date"
+                                                   required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="startDate" class="form-label">租期开始 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="startDate" name="start_date"
+                                                   required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="endDate" class="form-label">租期结束 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="date" class="form-control" id="endDate" name="end_date"
+                                                   required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="paymentCycle" class="form-label">付款周期</label>
+                                            <select class="form-select" id="paymentCycle" name="payment_cycle">
+                                                <option value="monthly">按月付款</option>
+                                                <option value="quarterly">按季付款</option>
+                                                <option value="semi-annual">半年付款</option>
+                                                <option value="annual">按年付款</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 其他条款 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-file-alt"></i> 其他条款</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="contractNotes" class="form-label">备注说明</label>
+                                            <textarea class="form-control" id="contractNotes" name="notes" rows="4"
+                                                      placeholder="请输入合同备注、特殊条款等信息..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="includeUtilities"
+                                                       name="include_utilities">
+                                                <label class="form-check-label" for="includeUtilities">
+                                                    包含水电费
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="allowPets"
+                                                       name="allow_pets">
+                                                <label class="form-check-label" for="allowPets">
+                                                    允许养宠物
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="autoRenewal"
+                                                       name="auto_renewal">
+                                                <label class="form-check-label" for="autoRenewal">
+                                                    自动续约
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存合同
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看合同详情模态框 -->
+    <div class="modal fade" id="viewContractModal" tabindex="-1" aria-labelledby="viewContractModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="viewContractModalLabel">
+                        <i class="fas fa-eye"></i> 合同详情
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewContractContent">
+                    <!-- 合同详情内容将通过JavaScript动态加载 -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> 关闭
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="printContract()">
+                        <i class="fas fa-print"></i> 打印合同
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑合同模态框 -->
+    <div class="modal fade" id="editContractModal" tabindex="-1" aria-labelledby="editContractModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title" id="editContractModalLabel">
+                        <i class="fas fa-edit"></i> 编辑租赁合同
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <form id="editContractForm">
+                    <input type="hidden" id="editContractId" name="contract_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- 基本信息 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> 基本信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="editContractNumber" class="form-label">合同编号 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="editContractNumber"
+                                                   name="contract_number" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editRoomNumber" class="form-label">房间号 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="editRoomNumber"
+                                                   name="room_number" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editMonthlyRent" class="form-label">月租金 (元) <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="number" step="0.01" class="form-control" id="editMonthlyRent"
+                                                   name="monthly_rent" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editDeposit" class="form-label">押金 (元)</label>
+                                            <input type="number" step="0.01" class="form-control" id="editDeposit"
+                                                   name="deposit">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 租客信息 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-user"></i> 租客信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="editTenantName" class="form-label">租客姓名 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="editTenantName"
+                                                   name="tenant_name" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editTenantPhone" class="form-label">联系电话 <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="tel" class="form-control" id="editTenantPhone"
+                                                   name="tenant_phone" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editTenantIdCard" class="form-label">身份证号</label>
+                                            <input type="text" class="form-control" id="editTenantIdCard"
+                                                   name="tenant_id_card">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editLandlordName" class="form-label">房东姓名</label>
+                                            <input type="text" class="form-control" id="editLandlordName"
+                                                   name="landlord_name">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editLandlordPhone" class="form-label">房东电话</label>
+                                            <input type="tel" class="form-control" id="editLandlordPhone"
+                                                   name="landlord_phone">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- 合同期限 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calendar"></i> 合同期限</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="editContractStartDate" class="form-label">合同开始日期</label>
+                                            <input type="date" class="form-control" id="editContractStartDate"
+                                                   name="contract_start_date">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editContractEndDate" class="form-label">合同结束日期</label>
+                                            <input type="date" class="form-control" id="editContractEndDate"
+                                                   name="contract_end_date">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editContractDuration" class="form-label">合同期限(月)</label>
+                                            <input type="number" class="form-control" id="editContractDuration"
+                                                   name="contract_duration">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editPaymentMethod" class="form-label">付款方式</label>
+                                            <input type="text" class="form-control" id="editPaymentMethod"
+                                                   name="payment_method">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editRentDueDate" class="form-label">租金到期日</label>
+                                            <input type="date" class="form-control" id="editRentDueDate"
+                                                   name="rent_due_date">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 其他信息 -->
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-file-alt"></i> 其他信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="editContractStatus" class="form-label">合同状态</label>
+                                            <select class="form-select" id="editContractStatus" name="contract_status">
+                                                <option value="1">有效</option>
+                                                <option value="2">失效</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editUtilitiesIncluded" class="form-label">是否包含水电费</label>
+                                            <select class="form-select" id="editUtilitiesIncluded"
+                                                    name="utilities_included">
+                                                <option value="1">包含</option>
+                                                <option value="2">不包含</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editWaterRate" class="form-label">水费单价</label>
+                                            <input type="number" step="0.01" class="form-control" id="editWaterRate"
+                                                   name="water_rate">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editElectricityRate" class="form-label">电费单价</label>
+                                            <input type="number" step="0.01" class="form-control"
+                                                   id="editElectricityRate" name="electricity_rate">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editContractTerms" class="form-label">合同条款</label>
+                                            <textarea class="form-control" id="editContractTerms" name="contract_terms"
+                                                      rows="3"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editSpecialAgreement" class="form-label">特殊约定</label>
+                                            <textarea class="form-control" id="editSpecialAgreement"
+                                                      name="special_agreement" rows="3"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editRemarks" class="form-label">备注</label>
+                                            <textarea class="form-control" id="editRemarks" name="remarks"
+                                                      rows="3"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> 保存修改
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除合同确认模态框 -->
+    <div class="modal fade" id="deleteContractModal" tabindex="-1" aria-labelledby="deleteContractModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteContractModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>删除合同确认
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-trash-alt text-danger" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h5 class="text-danger mb-3">确定要删除这份合同吗？</h5>
+                        <p class="text-muted mb-4">删除后将无法恢复，请谨慎操作！</p>
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>注意：</strong>删除合同后，相关的租赁记录可能会受到影响。
+                        </div>
+                    </div>
+                    <!-- 隐藏字段存储要删除的合同ID -->
+                    <input type="hidden" id="deleteContractId" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDeleteContract()">
+                        <i class="fas fa-trash me-2"></i>确认删除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // 存储已出租房间数据
+        let rentedRoomsData = [];
+
+        // 加载已出租房间列表
+        function loadRentedRooms() {
+            fetch('/api/rented_rooms_old')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        rentedRoomsData = data.rooms;
+                        const roomSelect = document.getElementById('roomSelect');
+                        
+                        // 清空现有选项（保留默认选项）
+                        roomSelect.innerHTML = '<option value="">请选择已出租的房间</option>';
+                        
+                        // 添加已出租房间选项
+                        data.rooms.forEach(room => {
+                            const option = document.createElement('option');
+                            option.value = room.room_number;
+                            option.textContent = `${room.room_number} - ${room.room_type} (租客: ${room.tenant_name})`;
+                            option.setAttribute('data-room-id', room.id);
+                            option.setAttribute('data-rent', room.base_rent);
+                            option.setAttribute('data-deposit', room.rental_deposit || room.deposit);
+                            option.setAttribute('data-tenant-name', room.tenant_name);
+                            option.setAttribute('data-tenant-phone', room.tenant_phone);
+                            option.setAttribute('data-checkin-date', room.check_in_date || '');
+                            roomSelect.appendChild(option);
+                        });
+                    } else {
+                        console.error('加载已出租房间失败:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载已出租房间失败:', error);
+                });
+        }
+
+        // 根据选择的房间自动填充信息
+        function fillRoomInfo(roomNumber) {
+            const selectedOption = document.querySelector(`#roomSelect option[value="${roomNumber}"]`);
+            if (!selectedOption) return;
+
+            // 自动填充月租金
+            const baseRent = selectedOption.getAttribute('data-rent');
+            if (baseRent) {
+                document.getElementById('monthlyRent').value = baseRent;
+            }
+
+            // 自动填充押金
+            const deposit = selectedOption.getAttribute('data-deposit');
+            if (deposit) {
+                document.getElementById('deposit').value = deposit;
+            }
+
+            // 自动填充租客姓名
+            const tenantName = selectedOption.getAttribute('data-tenant-name');
+            if (tenantName) {
+                document.getElementById('tenantName').value = tenantName;
+            }
+
+            // 自动填充租客电话
+            const tenantPhone = selectedOption.getAttribute('data-tenant-phone');
+            if (tenantPhone) {
+                document.getElementById('tenantPhone').value = tenantPhone;
+            }
+
+            // 自动填充租期开始日期（与租房管理页面的入住日期保持一致）
+        const checkInDate = selectedOption.getAttribute('data-checkin-date');
+        if (checkInDate) {
+            document.getElementById('startDate').value = checkInDate;
+            // 自动设置租期结束日期为入住日期的一年后
+            const startDate = new Date(checkInDate);
+            const endDate = new Date(startDate);
+            endDate.setFullYear(startDate.getFullYear() + 1);
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+        }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            // 设置今天的日期为默认签约日期
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('signDate').value = today;
+
+            // 加载已出租房间列表
+            loadRentedRooms();
+
+            // 房间选择变化时自动填充租金和租客信息
+            const roomSelect = document.getElementById('roomSelect');
+            if (roomSelect) {
+                roomSelect.addEventListener('change', function () {
+                    const roomNumber = this.value;
+
+                    if (roomNumber) {
+                        // 自动填充房间相关信息
+                        fillRoomInfo(roomNumber);
+                    } else {
+                        // 清空所有自动填充的字段
+                        document.getElementById('monthlyRent').value = '';
+                        document.getElementById('deposit').value = '';
+                        document.getElementById('tenantName').value = '';
+                        document.getElementById('tenantPhone').value = '';
+                        document.getElementById('startDate').value = '';
+                    }
+                });
+            }
+
+            // 自动生成合同编号
+            generateContractNumber();
+
+            // 编辑合同表单提交
+            document.getElementById('editContractForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const contractData = Object.fromEntries(formData);
+                const contractId = contractData.contract_id;
+
+                fetch(`/api/contracts_old/${contractId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(contractData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showSuccessMessage('合同更新成功！');
+                            bootstrap.Modal.getInstance(document.getElementById('editContractModal')).hide();
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            alert('更新失败: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('更新失败');
+                    });
+            });
+        });
+
+        // 搜索功能
+        document.getElementById('searchContract').addEventListener('input', function () {
+            filterContracts();
+        });
+
+        // 筛选功能
+        function filterContracts() {
+            const searchTerm = document.getElementById('searchContract').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const roomFilter = document.getElementById('filterRoom').value;
+            const dateFilter = document.getElementById('filterDate').value;
+            const tableRows = document.querySelectorAll('#contractsTable tbody tr[data-contract-id]');
+
+            tableRows.forEach(row => {
+                const contractNumber = row.querySelector('.contract-number').textContent.toLowerCase();
+                const tenantName = row.querySelector('.tenant-info strong').textContent.toLowerCase();
+                const roomNumber = row.querySelector('.room-badge').textContent;
+                const contractStatus = row.querySelector('.contract-status').textContent.trim();
+
+                let showRow = true;
+
+                // 搜索筛选
+                if (searchTerm && !contractNumber.includes(searchTerm) && !tenantName.includes(searchTerm)) {
+                    showRow = false;
+                }
+
+                // 状态筛选
+                if (statusFilter) {
+                    const statusMap = {
+                        '1': '有效',
+                        '2': '即将到期',
+                        '3': '已过期',
+                        '4': '已终止'
+                    };
+                    if (!contractStatus.includes(statusMap[statusFilter])) {
+                        showRow = false;
+                    }
+                }
+
+                // 房间筛选
+                if (roomFilter && roomNumber !== roomFilter) {
+                    showRow = false;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        // 生成合同编号
+        function generateContractNumber() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const contractNumber = `HT${year}${month}${day}${random}`;
+            document.getElementById('contractNumber').value = contractNumber;
+        }
+
+        // 刷新合同列表
+        function refreshContractList() {
+            location.reload();
+        }
+
+        // 导出合同
+        function exportContracts() {
+            // 这里可以实现导出功能
+            alert('导出功能开发中...');
+        }
+
+        // 查看合同详情
+        function viewContract(contractId) {
+            fetch(`/api/contracts_old/${contractId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const contract = data.contract;
+                        document.getElementById('viewContractContent').innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> 基本信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr><td><strong>合同编号:</strong></td><td>${contract.contract_number}</td></tr>
+                                            <tr><td><strong>房间号:</strong></td><td>${contract.room_number}</td></tr>
+                                            <tr><td><strong>月租金:</strong></td><td>¥${contract.monthly_rent}</td></tr>
+                                            <tr><td><strong>押金:</strong></td><td>¥${contract.deposit || '0.00'}</td></tr>
+                                            <tr><td><strong>付款方式:</strong></td><td>${contract.payment_method || '-'}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-user"></i> 租客信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr><td><strong>姓名:</strong></td><td>${contract.tenant_name}</td></tr>
+                                            <tr><td><strong>电话:</strong></td><td>${contract.tenant_phone}</td></tr>
+                                            <tr><td><strong>身份证:</strong></td><td>${contract.tenant_id_card || '-'}</td></tr>
+                                            <tr><td><strong>房东姓名:</strong></td><td>${contract.landlord_name || '-'}</td></tr>
+                                            <tr><td><strong>房东电话:</strong></td><td>${contract.landlord_phone || '-'}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-calendar"></i> 合同期限</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr><td><strong>合同开始:</strong></td><td>${contract.contract_start_date || '-'}</td></tr>
+                                            <tr><td><strong>合同结束:</strong></td><td>${contract.contract_end_date || '-'}</td></tr>
+                                            <tr><td><strong>租金到期:</strong></td><td>${contract.rent_due_date || '-'}</td></tr>
+                                            <tr><td><strong>合同状态:</strong></td><td>${contract.contract_status_text}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-file-alt"></i> 其他信息</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr><td><strong>包含水电:</strong></td><td>${contract.utilities_included_text}</td></tr>
+                                            <tr><td><strong>水费单价:</strong></td><td>¥${contract.water_rate || '-'}</td></tr>
+                                            <tr><td><strong>电费单价:</strong></td><td>¥${contract.electricity_rate || '-'}</td></tr>
+                                            <tr><td><strong>备注:</strong></td><td>${contract.remarks || '-'}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                        new bootstrap.Modal(document.getElementById('viewContractModal')).show();
+                    } else {
+                        alert('获取合同详情失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('获取合同详情时发生错误');
+                });
+        }
+
+        // 下载合同
+        function downloadContract(contractId) {
+            window.open(`/api/contracts_old/${contractId}/download`, '_blank');
+        }
+
+        // 编辑合同
+        function editContract(contractId) {
+            // 获取合同详情
+            fetch(`/api/contracts_old/${contractId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const contract = data.contract;
+
+                        // 填充表单数据
+                        document.getElementById('editContractId').value = contract.id;
+                        document.getElementById('editContractNumber').value = contract.contract_number || '';
+                        document.getElementById('editRoomNumber').value = contract.room_number || '';
+                        document.getElementById('editTenantName').value = contract.tenant_name || '';
+                        document.getElementById('editTenantPhone').value = contract.tenant_phone || '';
+                        document.getElementById('editTenantIdCard').value = contract.tenant_id_card || '';
+                        document.getElementById('editMonthlyRent').value = contract.monthly_rent || '';
+                        document.getElementById('editDeposit').value = contract.deposit || '';
+                        document.getElementById('editContractStartDate').value = contract.contract_start_date || '';
+                        document.getElementById('editContractEndDate').value = contract.contract_end_date || '';
+                        document.getElementById('editContractDuration').value = contract.contract_duration || '';
+                        document.getElementById('editPaymentMethod').value = contract.payment_method || '';
+                        document.getElementById('editRentDueDate').value = contract.rent_due_date || '';
+                        document.getElementById('editContractStatus').value = contract.contract_status || '1';
+                        document.getElementById('editUtilitiesIncluded').value = contract.utilities_included || '2';
+                        document.getElementById('editWaterRate').value = contract.water_rate || '';
+                        document.getElementById('editElectricityRate').value = contract.electricity_rate || '';
+                        document.getElementById('editContractTerms').value = contract.contract_terms || '';
+                        document.getElementById('editSpecialAgreement').value = contract.special_agreement || '';
+                        document.getElementById('editRemarks').value = contract.remarks || '';
+                        document.getElementById('editLandlordName').value = contract.landlord_name || '';
+                        document.getElementById('editLandlordPhone').value = contract.landlord_phone || '';
+
+                        // 显示编辑模态框
+                        const editModal = new bootstrap.Modal(document.getElementById('editContractModal'));
+                        editModal.show();
+                    } else {
+                        alert('获取合同详情失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('获取合同详情时发生错误');
+                });
+        }
+
+
+        // 删除合同
+        function deleteContract(contractId) {
+            // 设置要删除的合同ID
+            document.getElementById('deleteContractId').value = contractId;
+            // 显示删除确认模态框
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteContractModal'));
+            deleteModal.show();
+        }
+
+        // 确认删除合同
+        function confirmDeleteContract() {
+            const contractId = document.getElementById('deleteContractId').value;
+
+            fetch(`/api/contracts_old/${contractId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 关闭模态框
+                        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteContractModal'));
+                        deleteModal.hide();
+
+                        showSuccessMessage('合同删除成功！');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        alert('删除失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('删除失败，请稍后重试');
+                });
+        }
+
+        // 打印合同
+        function printContract() {
+            window.print();
+        }
+
+        // 显示成功消息
+        function showSuccessMessage(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+
+        // 新建合同表单提交
+        document.getElementById('addContractForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const contractData = Object.fromEntries(formData);
+
+            fetch('/api/contracts_old', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(contractData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showSuccessMessage('合同创建成功！');
+                        bootstrap.Modal.getInstance(document.getElementById('addContractModal')).hide();
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        alert('创建失败: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('创建失败');
+                });
+        });
+
+
+        // 表格行悬停效果
+        document.querySelectorAll('#contractsTable tbody tr[data-contract-id]').forEach(row => {
+            row.addEventListener('mouseenter', function () {
+                this.style.backgroundColor = '#f8f9fa';
+            });
+
+            row.addEventListener('mouseleave', function () {
+                this.style.backgroundColor = '';
+            });
+        });
+    </script>
+{% endblock %}

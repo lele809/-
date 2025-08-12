@@ -1,0 +1,512 @@
+/* 五楼管理页面样式 */
+
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-card .icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.stats-card .number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card .label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* 房间统计样式 */
+.room-stats .stat-item {
+    padding: 1rem;
+    border-radius: 10px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.room-stats .stat-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.stat-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.stat-percentage {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* 未交房租详情样式 */
+.unpaid-rooms .unpaid-item {
+    padding: 1rem;
+    border-radius: 10px;
+    background: #fff8f0;
+    border-left: 4px solid #ffc107;
+    transition: all 0.3s ease;
+}
+
+.unpaid-rooms .unpaid-item:hover {
+    background: #fff3e0;
+    transform: translateX(5px);
+}
+
+.room-badge {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 60px;
+    text-align: center;
+}
+
+.unpaid-amount {
+    text-align: right;
+}
+
+.recent-activity {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.1rem;
+}
+
+.activity-icon.success {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.activity-icon.warning {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+}
+
+.activity-icon.info {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #333;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+.progress-custom {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    margin-bottom: 1rem;
+}
+
+.progress-bar-custom {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.6s ease;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+/* 平板设备适配 (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .welcome-card {
+        padding: 1.8rem;
+        margin-bottom: 1.8rem;
+    }
+
+    .welcome-card h2 {
+        font-size: 1.8rem;
+    }
+
+    .stats-card {
+        padding: 1.3rem;
+        margin-bottom: 1.3rem;
+    }
+
+    .stats-card .icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .stats-card .number {
+        font-size: 1.8rem;
+    }
+
+    .chart-container,
+    .recent-activity {
+        padding: 1.3rem;
+        margin-bottom: 1.3rem;
+    }
+}
+
+/* 移动设备适配 (最大768px) */
+@media (max-width: 768px) {
+    .welcome-card {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+    }
+
+    .welcome-card h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .welcome-card p {
+        font-size: 0.95rem;
+    }
+
+    .stats-card {
+        padding: 1.2rem;
+        margin-bottom: 1.2rem;
+        text-align: center;
+    }
+
+    .stats-card .icon {
+        font-size: 2rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .stats-card .number {
+        font-size: 1.6rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .stats-card .label {
+        font-size: 0.85rem;
+    }
+
+    .room-stats .stat-item {
+        padding: 0.8rem;
+        margin-bottom: 0.8rem;
+        text-align: center;
+    }
+
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+        margin: 0 auto 0.5rem auto;
+    }
+
+    .stat-value {
+        font-size: 1.3rem;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+    }
+
+    .unpaid-rooms .unpaid-item {
+        padding: 0.8rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .room-badge {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        min-width: 50px;
+    }
+
+    .unpaid-amount {
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+
+    .chart-container,
+    .recent-activity {
+        padding: 1.2rem;
+        margin-bottom: 1.2rem;
+        border-radius: 12px;
+    }
+
+    .activity-item {
+        padding: 0.8rem 0;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .activity-icon {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* 小屏移动设备适配 (最大480px) */
+@media (max-width: 480px) {
+    .welcome-card {
+        padding: 1.2rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .welcome-card h2 {
+        font-size: 1.3rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .welcome-card p {
+        font-size: 0.9rem;
+    }
+
+    .stats-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .stats-card .icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .stats-card .number {
+        font-size: 1.4rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .stats-card .label {
+        font-size: 0.8rem;
+    }
+
+    .room-stats .stat-item {
+        padding: 0.6rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .stat-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+    }
+
+    .unpaid-rooms .unpaid-item {
+        padding: 0.6rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .room-badge {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+        min-width: 45px;
+    }
+
+    .chart-container,
+    .recent-activity {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .activity-item {
+        padding: 0.6rem 0;
+    }
+
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+        margin-bottom: 0.4rem;
+    }
+}
+
+/* 横屏移动设备适配 */
+@media (max-width: 768px) and (orientation: landscape) {
+    .welcome-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .welcome-card h2 {
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .stats-card .icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-card .number {
+        font-size: 1.5rem;
+    }
+
+    .chart-container,
+    .recent-activity {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .activity-item {
+        padding: 0.5rem 0;
+        flex-direction: row;
+        text-align: left;
+    }
+
+    .activity-icon {
+        margin-right: 0.8rem;
+        margin-bottom: 0;
+    }
+}
+
+/* 超大屏幕优化 (最小1200px) */
+@media (min-width: 1200px) {
+    .welcome-card {
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .welcome-card h2 {
+        font-size: 2.2rem;
+    }
+
+    .stats-card {
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .stats-card .icon {
+        font-size: 3rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .stats-card .number {
+        font-size: 2.5rem;
+    }
+
+    .stats-card .label {
+        font-size: 1rem;
+    }
+
+    .chart-container,
+    .recent-activity {
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+    }
+
+    .activity-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .stats-card:hover {
+        transform: none;
+    }
+
+    .stats-card:active {
+        transform: scale(0.98);
+    }
+
+    .room-stats .stat-item:hover {
+        transform: none;
+    }
+
+    .room-stats .stat-item:active {
+        transform: scale(0.98);
+        background: #dee2e6;
+    }
+
+    .unpaid-rooms .unpaid-item:hover {
+        transform: none;
+    }
+
+    .unpaid-rooms .unpaid-item:active {
+        transform: scale(0.98);
+        background: #fff0e6;
+    }
+}

@@ -1,0 +1,742 @@
+{% extends "base_old.html" %}
+
+{% block title %}五楼管理 - 租房管理系统{% endblock %}
+
+{% block page_title %}五楼管理{% endblock %}
+
+{% block breadcrumb %}
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> 仪表盘</a>
+                </li>
+                <li class="breadcrumb-item active">五楼管理</li>
+            </ol>
+        </nav>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index5.css') }}">
+{% endblock %}
+
+{% block content %}
+    <!-- 欢迎卡片 -->
+    <div class="welcome-card">
+        <h2><i class="fas fa-building"></i> 欢迎来到五楼管理系统</h2>
+        <p class="mb-0">管理五楼的租房信息、联系人和缴费记录</p>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="number">{{ stats.total_contacts or 0 }}</div>
+                <div class="label">联系人总数</div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="number">{{ stats.total_rental or 0 }}</div>
+                <div class="label">租房记录</div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="number">{{ stats.total_records or 0 }}</div>
+                <div class="label">缴费记录</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速操作和最近活动 -->
+    <div class="row">
+        <!-- 房间统计 -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie text-primary"></i> 房间统计
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="room-stats">
+                        <!-- 房间总数 -->
+                        <div class="stat-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon bg-primary">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <div class="stat-label">房间总数</div>
+                                        <div class="stat-value">{{ stats.total_rooms or 0 }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 已租出房间 -->
+                        <div class="stat-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon bg-success">
+                                        <i class="fas fa-home"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <div class="stat-label">已租出</div>
+                                        <div class="stat-value">{{ stats.rented_rooms or 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="stat-percentage text-success">
+                                    {% if stats.total_rooms and stats.total_rooms > 0 %}
+                                        {{ "%.0f"|format((stats.rented_rooms / stats.total_rooms * 100)) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 空余房间 -->
+                        <div class="stat-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon bg-info">
+                                        <i class="fas fa-door-open"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <div class="stat-label">空余房间</div>
+                                        <div class="stat-value">{{ stats.vacant_rooms or 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="stat-percentage text-info">
+                                    {% if stats.total_rooms and stats.total_rooms > 0 %}
+                                        {{ "%.0f"|format((stats.vacant_rooms / stats.total_rooms * 100)) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 未交房租 -->
+                        <div class="stat-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon bg-warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <div class="stat-label">未交房租</div>
+                                        <div class="stat-value">{{ stats.unpaid_rooms or 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="stat-percentage text-warning">
+                                    {% if stats.rented_rooms and stats.rented_rooms > 0 %}
+                                        {{ "%.0f"|format((stats.unpaid_rooms / stats.rented_rooms * 100)) }}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 未交房租详情 -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-circle text-warning"></i> 未交房租房号
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="unpaid-rooms">
+                        {% if stats.unpaid_room_details and stats.unpaid_room_details|length > 0 %}
+                            {% for room_detail in stats.unpaid_room_details %}
+                                <div class="unpaid-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="room-badge">{{ room_detail.room_number }}</div>
+                                            <div class="ms-3">
+                                                <div class="fw-bold">{{ room_detail.room_number }}房间</div>
+                                                <small class="text-muted">租客：{{ room_detail.tenant_name }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="unpaid-amount">
+                                            <div class="text-danger fw-bold">
+                                                ¥{{ "%.2f"|format(room_detail.total_due) }}
+                                            </div>
+                                            <small class="text-muted">欠费</small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-primary me-2" onclick="contactTenant('{{ room_detail.room_number }}', '{{ room_detail.tenant_name }}')">
+                                            <i class="fas fa-phone"></i> 联系
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="recordPayment('{{ room_detail.room_number }}', '{{ room_detail.tenant_name }}', '{{ room_detail.total_due }}')">
+                                            <i class="fas fa-money-bill"></i> 记录缴费
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                                <p>太棒了！所有房间都已缴费</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据概览图表 -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="chart-container">
+                <h5 class="mb-4">
+                    <i class="fas fa-chart-line text-primary"></i> 五楼房间状态概览
+                </h5>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>已出租房间</span>
+                                <span class="fw-bold">
+                                        {% if stats.total_rooms and stats.total_rooms > 0 %}
+                                            {{ "%.0f"|format((stats.rented_rooms / stats.total_rooms * 100)) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </span>
+                            </div>
+                            <div class="progress-custom">
+                                <div class="progress-bar-custom" style="width:
+                                        {% if stats.total_rooms and stats.total_rooms > 0 %}{{ "%.0f"|format((stats.rented_rooms / stats.total_rooms * 100)) }}{% else %}0{% endif %}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>空闲房间</span>
+                                <span class="fw-bold">
+                                        {% if stats.total_rooms and stats.total_rooms > 0 %}
+                                            {{ "%.0f"|format((stats.vacant_rooms / stats.total_rooms * 100)) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </span>
+                            </div>
+                            <div class="progress-custom">
+                                <div class="progress-bar-custom"
+                                     style="width:
+                                             {% if stats.total_rooms and stats.total_rooms > 0 %}{{ "%.0f"|format((stats.vacant_rooms / stats.total_rooms * 100)) }}{% else %}0{% endif %}%; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>已缴费</span>
+                                <span class="fw-bold">
+                                        {% if stats.rented_rooms and stats.rented_rooms > 0 %}
+                                            {{ "%.0f"|format(((stats.rented_rooms - stats.unpaid_rooms) / stats.rented_rooms * 100)) }}
+                                            %
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </span>
+                            </div>
+                            <div class="progress-custom">
+                                <div class="progress-bar-custom"
+                                     style="width:
+                                             {% if stats.rented_rooms and stats.rented_rooms > 0 %}{{ "%.0f"|format(((stats.rented_rooms - stats.unpaid_rooms) / stats.rented_rooms * 100)) }}{% else %}0{% endif %}%; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>待缴费</span>
+                                <span class="fw-bold">
+                                        {% if stats.rented_rooms and stats.rented_rooms > 0 %}
+                                            {{ "%.0f"|format((stats.unpaid_rooms / stats.rented_rooms * 100)) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </span>
+                            </div>
+                            <div class="progress-custom">
+                                <div class="progress-bar-custom"
+                                     style="width:
+                                             {% if stats.rented_rooms and stats.rented_rooms > 0 %}{{ "%.0f"|format((stats.unpaid_rooms / stats.rented_rooms * 100)) }}{% else %}0{% endif %}%; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 月度收入统计 -->
+        <div class="col-lg-4 mb-4">
+            <div class="chart-container">
+                <h5 class="mb-4">
+                    <i class="fas fa-coins text-primary"></i> 本月收入统计
+                </h5>
+
+                <div class="text-center">
+                    <div class="display-6 fw-bold text-primary mb-2">
+                        ¥{{ "%.0f"|format((stats.monthly_income or 0) + (stats.utilities_income or 0)) }}</div>
+                    <p class="text-muted mb-3">本月总收入</p>
+
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="fw-bold text-success">¥{{ "%.0f"|format(stats.monthly_income or 0) }}</div>
+                            <small class="text-muted">租金收入</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold text-info">¥{{ "%.0f"|format(stats.utilities_income or 0) }}</div>
+                            <small class="text-muted">水电费</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 待办事项 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-transparent">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks text-primary"></i> 待办事项
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- 合同到期提醒 -->
+                        <div class="col-md-4">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>合同到期提醒</strong><br>
+                                {% if stats.todo_items.contract_expiring and stats.todo_items.contract_expiring|length > 0 %}
+                                    <small>{{ stats.todo_items.contract_expiring|length }}个房间合同即将到期，需要及时续签</small>
+                                    <div class="mt-2">
+                                        {% for contract in stats.todo_items.contract_expiring[:3] %}
+                                            <div class="small text-muted">
+                                                {{ contract.room_number }}房间 - {{ contract.tenant_name }} ({{ contract.days_left }}天后到期)
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <small>暂无即将到期的合同</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- 缴费提醒 -->
+                        <div class="col-md-4">
+                            <div class="alert alert-info">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <strong>缴费提醒</strong><br>
+                                {% if stats.todo_items.unpaid_rent and stats.todo_items.unpaid_rent|length > 0 %}
+                                    <small>{{ stats.todo_items.unpaid_rent|length }}个房间本月租金尚未缴纳</small>
+                                    <div class="mt-2">
+                                        {% for rental in stats.todo_items.unpaid_rent[:3] %}
+                                            <div class="small text-muted">
+                                                {{ rental.room_number }}房间 - {{ rental.tenant_name }} (¥{{ "%.0f"|format(rental.total_due) }})
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <small>太棒了！所有房间都已缴费</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- 维修完成 -->
+                        <div class="col-md-4">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>维修完成</strong><br>
+                                {% if stats.todo_items.maintenance_completed and stats.todo_items.maintenance_completed|length > 0 %}
+                                    <small>{{ stats.todo_items.maintenance_completed|length }}个房间维修已完成</small>
+                                    <div class="mt-2">
+                                        {% for maintenance in stats.todo_items.maintenance_completed %}
+                                            <div class="small text-muted">
+                                                {{ maintenance.room_number }}房间{{ maintenance.status }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <small>暂无最近完成的维修项目</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 缴费记录模态框 -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="paymentModalLabel">
+                        <i class="fas fa-money-bill-wave me-2"></i>记录缴费
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="paymentForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentRoomNumber" class="form-label">
+                                        <i class="fas fa-door-closed me-1"></i>房间号
+                                    </label>
+                                    <input type="text" class="form-control" id="paymentRoomNumber" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentTenantName" class="form-label">
+                                        <i class="fas fa-user me-1"></i>租客姓名
+                                    </label>
+                                    <input type="text" class="form-control" id="paymentTenantName" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentAmount" class="form-label">
+                                        <i class="fas fa-money-bill me-1"></i>缴费金额 <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">¥</span>
+                                        <input type="number" class="form-control" id="paymentAmount" 
+                                               placeholder="请输入缴费金额" step="0.01" min="0" required>
+                                    </div>
+                                    <div class="form-text">建议金额：¥<span id="suggestedAmount">0.00</span></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentDate" class="form-label">
+                                        <i class="fas fa-calendar me-1"></i>缴费日期
+                                    </label>
+                                    <input type="date" class="form-control" id="paymentDate">
+                                    <div class="form-text">默认为今天</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="paymentNotes" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>备注说明
+                            </label>
+                            <textarea class="form-control" id="paymentNotes" rows="3" 
+                                      placeholder="请输入备注信息（可选）"></textarea>
+                        </div>
+                        
+                        <!-- 费用明细展示 -->
+                        <div class="card bg-light">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-list-ul me-1"></i>费用明细
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-sm">
+                                    <div class="col-6">
+                                        <div class="d-flex justify-content-between">
+                                            <span>月租金：</span>
+                                            <span id="detailMonthlyRent">¥0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>水费：</span>
+                                            <span id="detailWaterFee">¥0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="d-flex justify-content-between">
+                                            <span>电费：</span>
+                                            <span id="detailElectricityFee">¥0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>其他费用：</span>
+                                            <span id="detailUtilitiesFee">¥0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>应缴总额：</span>
+                                    <span class="text-danger" id="detailTotalDue">¥0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>取消
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="submitPayment()">
+                        <i class="fas fa-check me-1"></i>确认缴费
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // 页面加载完成后的动画效果
+        document.addEventListener('DOMContentLoaded', function () {
+            // 统计卡片动画
+            const statsCards = document.querySelectorAll('.stats-card');
+            statsCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.6s ease';
+
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 200);
+            });
+
+            // 进度条动画
+            const progressBars = document.querySelectorAll('.progress-bar-custom');
+            setTimeout(() => {
+                progressBars.forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0%';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 500);
+                });
+            }, 1000);
+
+            // 设置主页导航为活跃状态
+            const homeLink = document.querySelector('a[href*="index5"]');
+            if (homeLink) {
+                homeLink.classList.add('active');
+            }
+        });
+
+        // 初始化缴费模态框
+        initPaymentModal();
+        
+        // 未交房租操作按钮点击事件 - 为演示用的其他按钮
+        document.querySelectorAll('.unpaid-rooms .btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const action = this.textContent.trim();
+                const roomNumber = this.closest('.unpaid-item').querySelector('.room-badge').textContent;
+
+                // 如果是新添加的记录缴费按钮，则不执行这里的逻辑
+                if (this.hasAttribute('onclick')) {
+                    return;
+                }
+
+                if (action.includes('联系')) {
+                    alert(`正在联系 ${roomNumber} 房间租客...`);
+                } else if (action.includes('记录缴费')) {
+                    alert(`正在为 ${roomNumber} 房间记录缴费...`);
+                }
+            });
+        });
+
+        // 房间统计项点击事件
+        document.querySelectorAll('.room-stats .stat-item').forEach(item => {
+            item.addEventListener('click', function () {
+                const label = this.querySelector('.stat-label').textContent;
+                alert(`查看详细的${label}信息`);
+            });
+        });
+
+        // 缴费相关函数
+        function initPaymentModal() {
+            // 设置默认缴费日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('paymentDate').value = today;
+        }
+
+        // 联系租客
+        function contactTenant(roomNumber, tenantName) {
+            showNotification(`正在联系 ${roomNumber} 房间租客 ${tenantName}...`, 'info');
+            // 这里可以添加实际的联系功能，比如打开电话应用或发送短信
+        }
+
+        // 记录缴费
+        function recordPayment(roomNumber, tenantName, totalDue) {
+            // 设置模态框中的房间信息
+            document.getElementById('paymentRoomNumber').value = roomNumber;
+            document.getElementById('paymentTenantName').value = tenantName;
+            
+            // 设置建议金额
+            const suggestedAmount = parseFloat(totalDue) || 0;
+            document.getElementById('suggestedAmount').textContent = suggestedAmount.toFixed(2);
+            document.getElementById('paymentAmount').value = suggestedAmount.toFixed(2);
+
+            // 获取详细的房间费用信息
+            loadRoomPaymentDetails(roomNumber);
+
+            // 显示模态框
+            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            modal.show();
+        }
+
+        // 加载房间缴费详情
+        async function loadRoomPaymentDetails(roomNumber) {
+            try {
+                const response = await fetch(`/api/unpaid_room_info/old/${roomNumber}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const roomInfo = data.room_info;
+                    
+                    // 更新费用明细显示
+                    document.getElementById('detailMonthlyRent').textContent = `¥${(roomInfo.monthly_rent || 0).toFixed(2)}`;
+                    document.getElementById('detailWaterFee').textContent = `¥${(roomInfo.water_fee || 0).toFixed(2)}`;
+                    document.getElementById('detailElectricityFee').textContent = `¥${(roomInfo.electricity_fee || 0).toFixed(2)}`;
+                    document.getElementById('detailUtilitiesFee').textContent = `¥${(roomInfo.utilities_fee || 0).toFixed(2)}`;
+                    document.getElementById('detailTotalDue').textContent = `¥${(roomInfo.total_due || 0).toFixed(2)}`;
+                    
+                    // 更新建议金额
+                    document.getElementById('suggestedAmount').textContent = (roomInfo.total_due || 0).toFixed(2);
+                    document.getElementById('paymentAmount').value = (roomInfo.total_due || 0).toFixed(2);
+                } else {
+                    console.warn('获取房间详情失败:', data.message);
+                }
+            } catch (error) {
+                console.error('加载房间详情时出错:', error);
+            }
+        }
+
+        // 提交缴费记录
+        async function submitPayment() {
+            const roomNumber = document.getElementById('paymentRoomNumber').value;
+            const tenantName = document.getElementById('paymentTenantName').value;
+            const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+            const paymentDate = document.getElementById('paymentDate').value;
+            const notes = document.getElementById('paymentNotes').value;
+
+            // 验证输入
+            if (!roomNumber || !tenantName || !paymentAmount || paymentAmount <= 0) {
+                showNotification('请填写完整的缴费信息！', 'error');
+                return;
+            }
+
+            try {
+                // 显示加载状态
+                const submitBtn = document.querySelector('#paymentModal .btn-success');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>处理中...';
+                submitBtn.disabled = true;
+
+                const response = await fetch('/api/payment_record', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        floor: 'old',  // 五楼使用 'old'
+                        room_number: roomNumber,
+                        tenant_name: tenantName,
+                        payment_amount: paymentAmount,
+                        payment_date: paymentDate,
+                        notes: notes
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    
+                    // 关闭模态框
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+                    modal.hide();
+                    
+                    // 清空表单
+                    document.getElementById('paymentForm').reset();
+                    
+                    // 刷新页面数据
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('提交缴费记录时出错:', error);
+                showNotification('提交缴费记录失败，请重试！', 'error');
+            } finally {
+                // 恢复按钮状态
+                const submitBtn = document.querySelector('#paymentModal .btn-success');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // 显示通知消息
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            
+            const iconClass = type === 'error' ? 'fa-times-circle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+            
+            notification.innerHTML = `
+                <i class="fas ${iconClass} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            // 自动移除通知
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    </script>
+{% endblock %}
