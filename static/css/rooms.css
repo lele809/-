@@ -874,8 +874,37 @@ body::before {
         font-size: 1rem;
     }
 
+    /* 移动端表格横向滚动 */
     .table-responsive {
         border-radius: 15px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
+    }
+
+    /* 确保表格在移动端保持最小宽度，触发横向滚动 */
+    .table-responsive .table {
+        min-width: 800px;
+        margin-bottom: 0;
+    }
+
+    /* 美化滚动条 */
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #5a67d8;
     }
 
     .table tbody tr:hover {
@@ -883,7 +912,8 @@ body::before {
     }
 
     .table tbody td {
-        font-size: 1rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
     }
 
     .modal-body {
@@ -1349,17 +1379,28 @@ body::before {
         margin-bottom: 1rem;
     }
 
+    /* 小屏幕设备的表格横向滚动 */
     .table-responsive {
         border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
+    }
+
+    /* 确保表格在小屏幕设备上保持最小宽度 */
+    .table-responsive .table {
+        min-width: 700px;
     }
 
     .rooms-table th {
         font-size: 0.7rem;
         padding: 0.5rem 0.25rem;
+        white-space: nowrap;
     }
 
     .rooms-table td {
         padding: 0.75rem 0.25rem;
+        white-space: nowrap;
     }
 
     .room-number {
