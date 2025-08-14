@@ -8,7 +8,7 @@
     <div class="breadcrumb-container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('index5') }}"><i class="fas fa-home"></i> 主页</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('index6') }}"><i class="fas fa-home"></i> 主页</a></li>
                 <li class="breadcrumb-item active">联系人列表</li>
             </ol>
         </nav>
@@ -35,7 +35,7 @@
                         <div class="header-text">
                             <h2 class="header-title">联系人管理中心</h2>
                             <p class="header-subtitle mb-0">
-                                <i class="fas fa-users me-2"></i>管理五楼所有租客的联系信息，快速查找和联系租户
+                                <i class="fas fa-users me-2"></i>管理六楼所有租客的联系信息，快速查找和联系租户
                             </p>
                             <div class="header-badges mt-2">
                             <span class="badge bg-light text-dark me-2">
@@ -148,7 +148,7 @@
                             </div>
                         </div>
                         <div class="stats-content">
-                            <div class="stats-number" data-count="3">0</div>
+                            <div class="stats-number" data-count="{{ weekly_new_count }}">0</div>
                             <div class="stats-label">本周新增</div>
                             <div class="stats-trend">
                                 <i class="fas fa-arrow-up text-success"></i>
@@ -165,7 +165,7 @@
         </div>
 
         <!-- 搜索和操作区域 -->
-        <div class="search-section" data-aos="fade-up" data-aos-delay="500">
+        <div class="search-section">
             <div class="search-background"></div>
             <div class="row align-items-center">
                 <div class="col-lg-6 col-md-12 mb-3 mb-lg-0">
@@ -266,7 +266,8 @@
                                         title="表格视图">
                                     <i class="fas fa-table"></i>
                                 </button>
-                                <button class="btn btn-view-option" onclick="switchView('card')" title="卡片视图">
+                                <button class="btn btn-view-option active" onclick="switchView('card')"
+                                        title="卡片视图">
                                     <i class="fas fa-th-large"></i>
                                 </button>
                             </div>
@@ -277,7 +278,7 @@
 
             {% if contacts_list %}
                 <!-- 表格视图 -->
-                <div class="table-view" id="tableView">
+                <div class="table-view" id="tableView" style="display: none;">
                     <div class="table-responsive">
                         <table class="table table-hover modern-table">
                             <thead>
@@ -341,23 +342,6 @@
                             {% for contact in contacts_list %}
                                 <tr class="contact-row modern-row"
                                     data-search="
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -589,7 +573,7 @@
                                         <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
                                             {% if pagination.has_prev %}
                                                 <a class="page-link page-link-modern"
-                                                   href="{{ url_for('contacts_old', page=1, view_type=current_view_type) }}">
+                                                   href="{{ url_for('contacts_new', page=1) }}">
                                                     <i class="fas fa-angle-double-left"></i>
                                                 </a>
                                             {% else %}
@@ -602,7 +586,7 @@
                                         <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
                                             {% if pagination.has_prev %}
                                                 <a class="page-link page-link-modern"
-                                                   href="{{ url_for('contacts_old', page=pagination.prev_num, view_type=current_view_type) }}">
+                                                   href="{{ url_for('contacts_new', page=pagination.prev_num) }}">
                                                     <i class="fas fa-angle-left"></i>
                                                 </a>
                                             {% else %}
@@ -612,13 +596,13 @@
                                             {% endif %}
                                         </li>
 
-                                        <!-- 页码 - 显示示例页码但不可点击 -->
+                                        <!-- 页码 -->
                                         {% for page_num in pagination.iter_pages() %}
                                             {% if page_num %}
                                                 {% if page_num != pagination.page %}
                                                     <li class="page-item">
                                                         <a class="page-link page-link-modern"
-                                                           href="{{ url_for('contacts_old', page=page_num, view_type=current_view_type) }}">{{ page_num }}</a>
+                                                           href="{{ url_for('contacts_new', page=page_num) }}">{{ page_num }}</a>
                                                     </li>
                                                 {% else %}
                                                     <li class="page-item active">
@@ -636,7 +620,7 @@
                                         <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
                                             {% if pagination.has_next %}
                                                 <a class="page-link page-link-modern"
-                                                   href="{{ url_for('contacts_old', page=pagination.next_num, view_type=current_view_type) }}">
+                                                   href="{{ url_for('contacts_new', page=pagination.next_num) }}">
                                                     <i class="fas fa-angle-right"></i>
                                                 </a>
                                             {% else %}
@@ -649,7 +633,7 @@
                                         <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
                                             {% if pagination.has_next %}
                                                 <a class="page-link page-link-modern"
-                                                   href="{{ url_for('contacts_old', page=pagination.pages, view_type=current_view_type) }}">
+                                                   href="{{ url_for('contacts_new', page=pagination.pages) }}">
                                                     <i class="fas fa-angle-double-right"></i>
                                                 </a>
                                             {% else %}
@@ -1029,61 +1013,34 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const roomFilter = document.getElementById('roomFilter').value;
 
-            // 表格视图筛选
-            const tableRows = document.querySelectorAll('#tableView .contact-row');
-            // 卡片视图筛选
-            const cardRows = document.querySelectorAll('#cardView .contact-card');
+            // 筛选联系人数据
+            filteredContacts = allContacts.filter(contact => {
+                const searchData = contact.searchData.toLowerCase();
+                const roomData = contact.roomData;
 
-            let visibleCount = 0;
-
-            // 筛选表格行
-            tableRows.forEach(row => {
-                const searchData = row.getAttribute('data-search').toLowerCase();
-                const roomData = row.getAttribute('data-room');
-
-                let showRow = true;
+                let showContact = true;
 
                 // 搜索筛选
                 if (searchTerm && !searchData.includes(searchTerm)) {
-                    showRow = false;
+                    showContact = false;
                 }
 
                 // 房间筛选
                 if (roomFilter && roomData !== roomFilter) {
-                    showRow = false;
+                    showContact = false;
                 }
 
-                if (showRow) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+                return showContact;
             });
 
-            // 筛选卡片
-            cardRows.forEach(card => {
-                const searchData = card.getAttribute('data-search').toLowerCase();
-                const roomData = card.getAttribute('data-room');
+            // 重置到第一页
+            currentPage = 1;
 
-                let showCard = true;
+            // 更新分页显示
+            updatePagination();
 
-                // 搜索筛选
-                if (searchTerm && !searchData.includes(searchTerm)) {
-                    showCard = false;
-                }
-
-                // 房间筛选
-                if (roomFilter && roomData !== roomFilter) {
-                    showCard = false;
-                }
-
-                card.style.display = showCard ? '' : 'none';
-            });
-
-            // 更新序号和计数
-            updateRowNumbers();
-            updateContactCount(visibleCount);
+            // 更新联系人计数
+            updateContactCount(filteredContacts.length);
         }
 
         // 房间筛选
@@ -1095,7 +1052,12 @@
         function clearSearch() {
             document.getElementById('searchInput').value = '';
             document.getElementById('roomFilter').value = '';
-            filterContacts();
+
+            // 重置筛选结果
+            filteredContacts = [...allContacts];
+            currentPage = 1;
+            updatePagination();
+            updateContactCount(filteredContacts.length);
         }
 
         // 更新行号
@@ -1155,38 +1117,43 @@
             const selectAllCheckbox = document.getElementById('selectAllCheckbox');
             const contactCheckboxes = document.querySelectorAll('.contact-checkbox');
 
-            contactCheckboxes.forEach(checkbox => {
-                checkbox.checked = selectAllCheckbox.checked;
-            });
+            // 只允许选择，不允许取消
+            if (selectAllCheckbox.checked) {
+                contactCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            } else {
+                // 如果试图取消全选，重新选中
+                selectAllCheckbox.checked = true;
+                contactCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            }
 
             updateBatchActions();
         }
 
         // 选择所有可见项
         function selectAll() {
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            let visibleCheckboxes;
-            
-            // 检查当前是表格视图还是卡片视图
+            // 获取当前显示的视图
             const tableView = document.getElementById('tableView');
             const cardView = document.getElementById('cardView');
-            
-            if (tableView.style.display !== 'none') {
-                // 表格视图
+            const isTableView = tableView.style.display !== 'none';
+
+            let visibleCheckboxes;
+            if (isTableView) {
                 visibleCheckboxes = document.querySelectorAll('.contact-row:not([style*="none"]) .contact-checkbox');
             } else {
-                // 卡片视图
                 visibleCheckboxes = document.querySelectorAll('.contact-card:not([style*="none"]) .contact-checkbox');
             }
-            
-            // 切换全选状态
-            const allChecked = Array.from(visibleCheckboxes).every(checkbox => checkbox.checked);
-            
+
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
             visibleCheckboxes.forEach(checkbox => {
-                checkbox.checked = !allChecked;
+                checkbox.checked = true;
             });
 
-            selectAllCheckbox.checked = !allChecked;
+            selectAllCheckbox.checked = visibleCheckboxes.length > 0;
             updateBatchActions();
         }
 
@@ -1194,17 +1161,6 @@
         function updateBatchActions() {
             const checkedBoxes = document.querySelectorAll('.contact-checkbox:checked');
             const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            const allCheckboxes = document.querySelectorAll('.contact-checkbox');
-            
-            // 更新表头全选复选框状态
-            if (allCheckboxes.length > 0) {
-                const allChecked = Array.from(allCheckboxes).every(checkbox => checkbox.checked);
-                const someChecked = checkedBoxes.length > 0;
-                
-                selectAllCheckbox.checked = allChecked;
-                selectAllCheckbox.indeterminate = someChecked && !allChecked;
-            }
 
             if (checkedBoxes.length > 0) {
                 batchDeleteBtn.disabled = false;
@@ -1382,7 +1338,7 @@
             };
 
             // 发送添加请求
-            fetch('/api/contacts', {
+            fetch('/api/contacts_old', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1395,8 +1351,8 @@
                         showToast('联系人添加成功！', 'success');
                         // 关闭模态框
                         bootstrap.Modal.getInstance(document.getElementById('addContactModal')).hide();
-                        // 刷新页面
-                        setTimeout(() => location.reload(), 1000);
+                        // 强制刷新页面，避免缓存问题
+                        setTimeout(() => location.reload(true), 1500);
                     } else {
                         showToast('添加失败：' + data.message, 'error');
                     }
@@ -1545,43 +1501,34 @@
             }, 1000);
         }
 
-        // 初始化视图状态
-        function initializeViewState() {
-            // 获取当前URL参数中的view_type
-            const urlParams = new URLSearchParams(window.location.search);
-            const currentViewType = urlParams.get('view_type') || 'card'; // 默认卡片视图
-            
+        // 视图切换功能
+        function switchView(viewType) {
             const tableView = document.getElementById('tableView');
             const cardView = document.getElementById('cardView');
             const viewButtons = document.querySelectorAll('.btn-view-option');
-            
-            // 移除所有按钮的活跃状态
+
+            // 移除所有活跃状态
             viewButtons.forEach(btn => btn.classList.remove('active'));
-            
-            if (currentViewType === 'table') {
+
+            if (viewType === 'table') {
                 tableView.style.display = 'block';
                 cardView.style.display = 'none';
-                document.querySelector('[onclick="switchView(\'table\')"').classList.add('active');
+                document.querySelector('[onclick="switchView(\'table\')"]').classList.add('active');
+                itemsPerPage = 10; // 表格视图每页10条
             } else {
                 tableView.style.display = 'none';
                 cardView.style.display = 'block';
-                document.querySelector('[onclick="switchView(\'card\')"').classList.add('active');
+                document.querySelector('[onclick="switchView(\'card\')"]').classList.add('active');
+                itemsPerPage = 12; // 卡片视图每页12条
             }
-        }
-        
-        // 视图切换功能
-        function switchView(viewType) {
-            // 获取当前URL参数
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            // 设置新的视图类型
-            urlParams.set('view_type', viewType);
-            
-            // 重置到第一页（因为不同视图的分页数量不同）
-            urlParams.set('page', '1');
-            
-            // 重新加载页面以应用新的分页设置
-            window.location.href = window.location.pathname + '?' + urlParams.toString();
+
+            // 重置到第一页
+            currentPage = 1;
+
+            // 重新应用筛选和分页
+            if (typeof filteredContacts !== 'undefined') {
+                updatePagination();
+            }
         }
 
         // 表格排序功能
@@ -1802,11 +1749,115 @@
         }
 
 
+        // 分页相关变量
+        let currentPage = 1;
+        let itemsPerPage = 12; // 默认卡片视图每页12条
+        let allContacts = [];
+        let filteredContacts = [];
+
+        // 初始化联系人数据
+        function initContactsData() {
+            allContacts = [];
+
+            // 从表格行中提取数据
+            const tableRows = document.querySelectorAll('#tableView .contact-row');
+            tableRows.forEach((row, index) => {
+                const contact = {
+                    element: row,
+                    cardElement: document.querySelectorAll('#cardView .contact-card')[index],
+                    searchData: row.getAttribute('data-search') || '',
+                    roomData: row.getAttribute('data-room') || '',
+                    index: index
+                };
+                allContacts.push(contact);
+            });
+
+            // 初始化筛选结果为所有联系人
+            filteredContacts = [...allContacts];
+        }
+
+        // 初始化分页
+        function initPagination() {
+            // 获取所有联系人数据
+            const tableRows = document.querySelectorAll('.contact-row');
+            const cardItems = document.querySelectorAll('.contact-card');
+
+            allContacts = Array.from(tableRows).map((row, index) => ({
+                tableElement: row,
+                cardElement: cardItems[index],
+                searchData: row.getAttribute('data-search'),
+                roomData: row.getAttribute('data-room')
+            }));
+
+            filteredContacts = [...allContacts];
+            updatePagination();
+        }
+
+        // 更新分页显示
+        function updatePagination() {
+            const totalItems = filteredContacts.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            // 确保当前页在有效范围内
+            if (currentPage > totalPages) {
+                currentPage = Math.max(1, totalPages);
+            }
+
+            // 显示当前页的数据
+            displayCurrentPage();
+
+            // 更新分页信息
+            updatePaginationInfo(totalItems, totalPages);
+        }
+
+        // 显示当前页数据
+        function displayCurrentPage() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+
+            // 隐藏所有项目
+            allContacts.forEach(contact => {
+                if (contact.element) contact.element.style.display = 'none';
+                if (contact.cardElement) contact.cardElement.style.display = 'none';
+            });
+
+            // 显示当前页的项目
+            filteredContacts.slice(startIndex, endIndex).forEach((contact, index) => {
+                const tableView = document.getElementById('tableView');
+                const isTableView = tableView.style.display !== 'none';
+
+                if (isTableView && contact.element) {
+                    contact.element.style.display = '';
+                    // 更新行号
+                    const rowNumber = contact.element.querySelector('.row-number');
+                    if (rowNumber) {
+                        rowNumber.textContent = startIndex + index + 1;
+                    }
+                } else if (!isTableView && contact.cardElement) {
+                    contact.cardElement.style.display = '';
+                }
+            });
+        }
+
+        // 更新分页信息
+        function updatePaginationInfo(totalItems, totalPages) {
+            const paginationText = document.querySelector('.pagination-text');
+            if (paginationText) {
+                paginationText.textContent = `共 ${totalItems} 条联系人记录，当前第 ${currentPage} 页，共 ${totalPages} 页`;
+            }
+        }
+
+        // 切换页面
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                updatePagination();
+            }
+        }
+
         // 页面加载完成后的初始化
         document.addEventListener('DOMContentLoaded', function () {
-            // 初始化视图显示状态
-            initializeViewState();
-            
             // 初始化AOS动画
             if (typeof AOS !== 'undefined') {
                 AOS.init({
@@ -1819,11 +1870,21 @@
 
             // 数字动画
             setTimeout(animateNumbers, 800);
+
             // 设置联系人列表导航为活跃状态
             const contactsLink = document.querySelector('a[href*="contacts_old"]');
             if (contactsLink) {
                 contactsLink.classList.add('active');
             }
+
+            // 初始化联系人数据
+            initContactsData();
+
+            // 初始化分页
+            initPagination();
+
+            // 设置默认为卡片视图
+            switchView('card');
 
             // 添加表格行的悬停效果
             const tableRows = document.querySelectorAll('.contact-row');
