@@ -19,9 +19,21 @@ from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from sqlalchemy import extract, and_
 
 app = Flask(__name__)
-app.config.from_object('config.Config')
 
-db.init_app(app)
+try:
+    app.config.from_object('config.Config')
+    db.init_app(app)
+    print("✅ 数据库初始化成功")
+except Exception as e:
+    print(f"❌ 数据库初始化失败: {str(e)}")
+    print("🔧 尝试使用SQLite备用数据库...")
+    # 强制使用SQLite作为备用
+    import tempfile
+    db_path = os.path.join(tempfile.gettempdir(), 'rent_system_emergency.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    db.init_app(app)
+    print(f"✅ 使用紧急SQLite数据库: {db_path}")
 
 
 # 全局上下文处理器 - 使所有模板都能访问当前管理员信息
@@ -103,6 +115,174 @@ def get_todo_items(floor='old'):
             })
 
     return todo_items
+
+
+@app.route('/health')
+def health_check():
+    """健康检查路由 - 用于调试部署问题"""
+    try:
+        # 检查数据库连接
+        db.session.execute(db.text('SELECT 1'))
+        db_status = "✅ 数据库连接正常"
+        
+        # 检查表是否存在
+        try:
+            admin_count = Admin.query.count()
+            table_status = f"✅ Admin表存在，共有 {admin_count} 个管理员账户"
+        except Exception:
+            table_status = "❌ Admin表不存在，需要初始化数据库"
+            
+    except Exception as e:
+        db_status = f"❌ 数据库连接失败: {str(e)}"
+        table_status = "❌ 无法检查表状态"
+    
+    # 检查配置
+    config_info = {
+        'SECRET_KEY': '已设置' if app.config.get('SECRET_KEY') else '未设置',
+        'DATABASE_URI': app.config.get('SQLALCHEMY_DATABASE_URI', '未设置')[:50] + '...' if app.config.get('SQLALCHEMY_DATABASE_URI') else '未设置'
+    }
+    
+    return f"""
+    <html>
+    <head>
+        <title>租房系统健康检查</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; }}
+            .success {{ color: green; }}
+            .error {{ color: red; }}
+            .button {{ background-color: #4CAF50; color: white; padding: 10px 20px; 
+                      text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }}
+        </style>
+    </head>
+    <body>
+        <h1>租房系统健康检查</h1>
+        
+        <h2>数据库状态</h2>
+        <p class="{'success' if '✅' in db_status else 'error'}">{db_status}</p>
+        
+        <h2>数据库表状态</h2>
+        <p class="{'success' if '✅' in table_status else 'error'}">{table_status}</p>
+        
+        <h2>配置信息</h2>
+        <ul>
+            <li>SECRET_KEY: {config_info['SECRET_KEY']}</li>
+            <li>DATABASE_URI: {config_info['DATABASE_URI']}</li>
+        </ul>
+        
+        <h2>操作</h2>
+        <a href="/setup_database" class="button">🔧 初始化数据库</a>
+        <a href="/login" class="button">🏠 返回登录页</a>
+    </body>
+    </html>
+    """
+
+
+@app.route('/setup_database')
+def setup_database():
+    """数据库初始化路由 - 通过网页访问初始化数据库"""
+    try:
+        # 创建所有表
+        db.create_all()
+        
+        # 检查是否已存在管理员账户
+        existing_admin = Admin.query.first()
+        if existing_admin:
+            return f"""
+            <html>
+            <head>
+                <title>数据库初始化</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                    .success {{ color: green; }}
+                    .info {{ color: blue; }}
+                    .button {{ background-color: #4CAF50; color: white; padding: 10px 20px; 
+                              text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }}
+                </style>
+            </head>
+            <body>
+                <h1>数据库初始化结果</h1>
+                <p class="success">✅ 数据库表已存在</p>
+                <p class="info">ℹ️ 管理员账户已存在: {existing_admin.admin_name}</p>
+                <p class="info">数据库无需重复初始化</p>
+                
+                <h2>操作</h2>
+                <a href="/login" class="button">🏠 前往登录</a>
+                <a href="/health" class="button">🔧 健康检查</a>
+            </body>
+            </html>
+            """
+        
+        # 创建默认管理员账户
+        from werkzeug.security import generate_password_hash
+        admin = Admin(
+            admin_name='admin',
+            admin_password=generate_password_hash('123456')
+        )
+        db.session.add(admin)
+        db.session.commit()
+        
+        return f"""
+        <html>
+        <head>
+            <title>数据库初始化成功</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                .success {{ color: green; }}
+                .important {{ background-color: #fff3cd; padding: 15px; border: 1px solid #ffeaa7; border-radius: 5px; }}
+                .button {{ background-color: #4CAF50; color: white; padding: 10px 20px; 
+                          text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }}
+            </style>
+        </head>
+        <body>
+            <h1>🎉 数据库初始化成功！</h1>
+            
+            <p class="success">✅ 数据库表创建完成</p>
+            <p class="success">✅ 默认管理员账户创建完成</p>
+            
+            <div class="important">
+                <h3>🔑 登录信息</h3>
+                <p><strong>用户名:</strong> admin</p>
+                <p><strong>密码:</strong> 123456</p>
+                <p><strong>⚠️ 重要:</strong> 请在首次登录后立即修改密码！</p>
+            </div>
+            
+            <h2>操作</h2>
+            <a href="/login" class="button">🏠 前往登录</a>
+            <a href="/health" class="button">🔧 健康检查</a>
+        </body>
+        </html>
+        """
+        
+    except Exception as e:
+        return f"""
+        <html>
+        <head>
+            <title>数据库初始化失败</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                .error {{ color: red; }}
+                .button {{ background-color: #f44336; color: white; padding: 10px 20px; 
+                          text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }}
+            </style>
+        </head>
+        <body>
+            <h1>❌ 数据库初始化失败</h1>
+            
+            <p class="error">错误详情: {str(e)}</p>
+            
+            <h2>可能的解决方案</h2>
+            <ul>
+                <li>检查数据库连接是否正常</li>
+                <li>确认环境变量配置正确</li>
+                <li>稍后重试初始化</li>
+            </ul>
+            
+            <h2>操作</h2>
+            <a href="/setup_database" class="button">🔄 重试初始化</a>
+            <a href="/health" class="button">🔧 健康检查</a>
+        </body>
+        </html>
+        """
 
 
 @app.route('/login', methods=['GET', 'POST'])
