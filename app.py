@@ -117,6 +117,49 @@ def get_todo_items(floor='old'):
     return todo_items
 
 
+@app.route('/test')
+def test_route():
+    """测试路由 - 确保代码更新生效"""
+    return "<h1>🎉 代码更新成功！</h1><p>路由正常工作</p><a href='/init_db'>点击初始化数据库</a>"
+
+
+@app.route('/init_db')
+def init_db_simple():
+    """简单的数据库初始化路由"""
+    try:
+        from models import Admin
+        from werkzeug.security import generate_password_hash
+        
+        # 创建所有表
+        db.create_all()
+        
+        # 检查是否已存在管理员
+        existing = Admin.query.first()
+        if existing:
+            return f"<h1>✅ 数据库已初始化</h1><p>管理员: {existing.admin_name}</p><a href='/login'>前往登录</a>"
+        
+        # 创建管理员
+        admin = Admin(
+            admin_name='admin',
+            password=generate_password_hash('123456')
+        )
+        db.session.add(admin)
+        db.session.commit()
+        
+        return """
+        <h1>🎉 数据库初始化成功！</h1>
+        <p>✅ 表创建完成</p>
+        <p>✅ 管理员账户创建完成</p>
+        <h2>登录信息：</h2>
+        <p>用户名: admin</p>
+        <p>密码: 123456</p>
+        <a href='/login'>前往登录</a>
+        """
+        
+    except Exception as e:
+        return f"<h1>❌ 初始化失败</h1><p>错误: {str(e)}</p>"
+
+
 @app.route('/health')
 def health_check():
     """健康检查路由 - 用于调试部署问题"""
@@ -216,7 +259,7 @@ def setup_database():
         from werkzeug.security import generate_password_hash
         admin = Admin(
             admin_name='admin',
-            admin_password=generate_password_hash('123456')
+            password=generate_password_hash('123456')
         )
         db.session.add(admin)
         db.session.commit()
