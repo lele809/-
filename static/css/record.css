@@ -1210,6 +1210,13 @@ body {
         overflow-x: auto;
     }
 
+    /* 为收费记录表格添加移动端横向滚动 */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
+    }
+
     .table {
         min-width: 800px;
     }
@@ -1223,6 +1230,7 @@ body {
     .table tbody td {
         padding: 0.8rem 0.4rem;
         font-size: 0.8rem;
+        white-space: nowrap;
     }
 
     .btn-action {
@@ -1563,6 +1571,9 @@ body {
 @media (max-width: 576px) {
     .table-responsive {
         border: none;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
     }
 
     .table {
@@ -1574,10 +1585,12 @@ body {
         padding: 0.4rem 0.2rem;
         font-size: 0.7rem;
         line-height: 1.2;
+        white-space: nowrap;
     }
 
     .table tbody td {
         padding: 0.4rem 0.2rem;
+        white-space: nowrap;
         font-size: 0.7rem;
         line-height: 1.3;
     }
