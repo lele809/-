@@ -541,6 +541,16 @@ def contacts_old():
 
     # 先查询总数
     total_count = ContactsOld.query.count()
+    
+    # 计算本周新增联系人数量
+    from datetime import datetime, timedelta
+    today = datetime.now()
+    week_start = today - timedelta(days=today.weekday())  # 本周一
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    weekly_new_count = ContactsOld.query.filter(
+        ContactsOld.created_at >= week_start
+    ).count()
 
     if total_count <= min_for_pagination:
         # 如果总数不超过最小分页数量，直接返回所有数据，不分页
@@ -548,7 +558,8 @@ def contacts_old():
         return render_template('contacts_old.html',
                                contacts_list=contacts_list,
                                pagination=None,
-                               current_view_type=view_type)
+                               current_view_type=view_type,
+                               weekly_new_count=weekly_new_count)
     else:
         # 超过最小分页数量才进行分页
         contacts_pagination = ContactsOld.query.paginate(
@@ -561,7 +572,8 @@ def contacts_old():
         return render_template('contacts_old.html',
                                contacts_list=contacts_list,
                                pagination=contacts_pagination,
-                               current_view_type=view_type)
+                               current_view_type=view_type,
+                               weekly_new_count=weekly_new_count)
 
 
 @app.route('/rooms_old')
@@ -612,6 +624,16 @@ def rooms_new():
 def contacts_new():
     page = request.args.get('page', 1, type=int)
     per_page = 10  # 每页10条数据
+    
+    # 计算本周新增联系人数量
+    from datetime import datetime, timedelta
+    today = datetime.now()
+    week_start = today - timedelta(days=today.weekday())  # 本周一
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    weekly_new_count = ContactsNew.query.filter(
+        ContactsNew.created_at >= week_start
+    ).count()
 
     # 总是进行分页处理，确保模板能正确显示分页信息
     contacts_pagination = ContactsNew.query.paginate(
@@ -623,7 +645,8 @@ def contacts_new():
     contacts_list = contacts_pagination.items
     return render_template('contacts_new.html',
                            contacts_list=contacts_list,
-                           pagination=contacts_pagination)
+                           pagination=contacts_pagination,
+                           weekly_new_count=weekly_new_count)
 
 
 @app.route('/rental_old')
@@ -1201,6 +1224,31 @@ def api_update_contact_old(contact_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'更新失败: {str(e)}'})
+
+
+# 五楼联系人API
+@app.route('/api/contacts_old', methods=['POST'])
+def api_contacts_old():
+    """添加五楼联系人"""
+    try:
+        data = request.get_json()
+
+        # 检查联系人是否存在
+        exist_contact = ContactsOld.query.filter_by(phone=data['phone']).first()
+        if exist_contact:
+            return jsonify({'success': False, 'message': '电话号码已存在'})
+        new_contact = ContactsOld(
+            phone=data['phone'],
+            name=data['name'],
+            roomId=data['roomId'],
+            id_card=data['id_card']
+        )
+        db.session.add(new_contact)
+        db.session.commit()
+        return jsonify({'success': True, 'message': '联系人添加成功'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'添加失败: {str(e)}'})
 
 
 # 联系人
@@ -3193,6 +3241,275 @@ def api_delete_admin(admin_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'删除失败: {str(e)}'})
+
+
+@app.route('/mobile-test')
+def mobile_test():
+    """移动端适配测试页面"""
+    return render_template('mobile-test.html')
+
+@app.route('/mobile-table-test')
+def mobile_table_test():
+    """移动端表格滚动测试页面"""
+    return render_template('mobile-table-test.html')
+
+
+@app.route('/debug-login')
+def debug_login():
+    """登录问题调试页面"""
+    try:
+        from models import Admin
+        from werkzeug.security import generate_password_hash
+        
+        # 检查数据库连接
+        try:
+            db.session.execute(db.text('SELECT 1'))
+            db_status = "✅ 数据库连接正常"
+        except Exception as e:
+            db_status = f"❌ 数据库连接失败: {str(e)}"
+        
+        # 检查Admin表和账户
+        try:
+            admin_count = Admin.query.count()
+            admins = Admin.query.all()
+            
+            admin_list = []
+            for admin in admins:
+                # 测试常用密码
+                test_passwords = ['123456', 'admin123', 'admin', 'password']
+                correct_password = None
+                
+                for pwd in test_passwords:
+                    try:
+                        if admin.check_password(pwd):
+                            correct_password = pwd
+                            break
+                    except:
+                        pass
+                
+                admin_list.append({
+                    'id': admin.id,
+                    'username': admin.admin_name,
+                    'has_password': bool(admin.password),
+                    'password_hash_length': len(admin.password) if admin.password else 0,
+                    'last_login': admin.last_login,
+                    'correct_password': correct_password
+                })
+            
+            admin_status = f"✅ 找到 {admin_count} 个管理员账户"
+            
+        except Exception as e:
+            admin_status = f"❌ 查询管理员失败: {str(e)}"
+            admin_list = []
+        
+        # 生成HTML调试页面
+        html = f"""
+        <!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>登录问题调试</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
+                .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }}
+                .status {{ padding: 10px; margin: 10px 0; border-radius: 4px; }}
+                .success {{ background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }}
+                .error {{ background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }}
+                .info {{ background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }}
+                .admin-card {{ border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 4px; }}
+                .btn {{ background: #007bff; color: white; padding: 8px 16px; text-decoration: none; 
+                       border-radius: 4px; display: inline-block; margin: 5px; }}
+                .btn-success {{ background: #28a745; }}
+                .btn-warning {{ background: #ffc107; color: #212529; }}
+                .btn-danger {{ background: #dc3545; }}
+                pre {{ background: #f8f9fa; padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🔍 登录问题调试页面</h1>
+                
+                <h2>1. 数据库状态</h2>
+                <div class="status {'success' if '✅' in db_status else 'error'}">
+                    {db_status}
+                </div>
+                
+                <h2>2. 管理员账户状态</h2>
+                <div class="status {'success' if '✅' in admin_status else 'error'}">
+                    {admin_status}
+                </div>
+                
+                <h2>3. 管理员账户详情</h2>
+        """
+        
+        if admin_list:
+            for admin in admin_list:
+                html += f"""
+                <div class="admin-card">
+                    <h4>👤 用户: {admin['username']}</h4>
+                    <p><strong>ID:</strong> {admin['id']}</p>
+                    <p><strong>密码状态:</strong> {'✅ 已设置' if admin['has_password'] else '❌ 未设置'}</p>
+                    <p><strong>密码哈希长度:</strong> {admin['password_hash_length']} 字符</p>
+                    <p><strong>最后登录:</strong> {admin['last_login'] or '从未登录'}</p>
+                    <p><strong>测试结果:</strong> 
+                        {'✅ 密码: ' + admin['correct_password'] if admin['correct_password'] else '❌ 未找到匹配密码'}
+                    </p>
+                </div>
+                """
+        else:
+            html += '<div class="status error">❌ 没有找到任何管理员账户</div>'
+        
+        html += f"""
+                <h2>4. 快速操作</h2>
+                <a href="/reset-admin-password" class="btn btn-warning">🔧 重置admin密码为123456</a>
+                <a href="/create-default-admin" class="btn btn-success">➕ 创建默认管理员</a>
+                <a href="/login" class="btn">🏠 返回登录页</a>
+                
+                <h2>5. 常用登录信息</h2>
+                <div class="info status">
+                    <h4>默认登录信息:</h4>
+                    <p><strong>用户名:</strong> admin</p>
+                    <p><strong>密码:</strong> 123456 或 admin123</p>
+                </div>
+                
+                <h2>6. 如何解决登录问题</h2>
+                <div class="info status">
+                    <ol>
+                        <li>如果没有管理员账户，点击"创建默认管理员"</li>
+                        <li>如果有账户但密码不对，点击"重置admin密码"</li>
+                        <li>如果数据库连接失败，检查数据库配置</li>
+                        <li>如果表不存在，访问 <a href="/setup_database">/setup_database</a></li>
+                    </ol>
+                </div>
+                
+                <h2>7. 当前应用配置</h2>
+                <pre>
+数据库URI: {app.config.get('SQLALCHEMY_DATABASE_URI', '未配置')[:50]}...
+调试模式: {app.debug}
+密钥配置: {'已配置' if app.config.get('SECRET_KEY') else '未配置'}
+                </pre>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return html
+        
+    except Exception as e:
+        return f"""
+        <html>
+        <body style="font-family: Arial; margin: 20px;">
+            <h1>❌ 调试失败</h1>
+            <p>错误信息: {str(e)}</p>
+            <p>请检查系统配置或查看控制台日志</p>
+            <a href="/login">返回登录页</a>
+        </body>
+        </html>
+        """
+
+
+@app.route('/reset-admin-password')
+def reset_admin_password():
+    """重置管理员密码"""
+    try:
+        from models import Admin
+        
+        # 查找或创建admin用户
+        admin = Admin.query.filter_by(admin_name='admin').first()
+        
+        if not admin:
+            # 创建admin用户
+            admin = Admin(admin_name='admin')
+            admin.set_password('123456')
+            db.session.add(admin)
+            db.session.commit()
+            
+            return f"""
+            <html>
+            <body style="font-family: Arial; margin: 20px;">
+                <h1>✅ 管理员账户创建成功</h1>
+                <p><strong>用户名:</strong> admin</p>
+                <p><strong>密码:</strong> 123456</p>
+                <p><a href="/login">立即登录</a> | <a href="/debug-login">返回调试页</a></p>
+            </body>
+            </html>
+            """
+        else:
+            # 重置密码
+            admin.set_password('123456')
+            admin.last_login = None
+            db.session.commit()
+            
+            return f"""
+            <html>
+            <body style="font-family: Arial; margin: 20px;">
+                <h1>✅ 密码重置成功</h1>
+                <p><strong>用户名:</strong> admin</p>
+                <p><strong>新密码:</strong> 123456</p>
+                <p><a href="/login">立即登录</a> | <a href="/debug-login">返回调试页</a></p>
+            </body>
+            </html>
+            """
+    except Exception as e:
+        return f"""
+        <html>
+        <body style="font-family: Arial; margin: 20px;">
+            <h1>❌ 重置失败</h1>
+            <p>错误: {str(e)}</p>
+            <p><a href="/debug-login">返回调试页</a></p>
+        </body>
+        </html>
+        """
+
+
+@app.route('/create-default-admin')
+def create_default_admin():
+    """创建默认管理员账户"""
+    try:
+        from models import Admin
+        
+        # 检查是否已存在
+        existing = Admin.query.filter_by(admin_name='admin').first()
+        if existing:
+            return f"""
+            <html>
+            <body style="font-family: Arial; margin: 20px;">
+                <h1>⚠️ 管理员已存在</h1>
+                <p>用户名 'admin' 已存在</p>
+                <p>如需重置密码，请使用<a href="/reset-admin-password">重置密码功能</a></p>
+                <p><a href="/debug-login">返回调试页</a></p>
+            </body>
+            </html>
+            """
+        
+        # 创建默认管理员
+        admin = Admin(admin_name='admin')
+        admin.set_password('123456')
+        db.session.add(admin)
+        db.session.commit()
+        
+        return f"""
+        <html>
+        <body style="font-family: Arial; margin: 20px;">
+            <h1>✅ 默认管理员创建成功</h1>
+            <p><strong>用户名:</strong> admin</p>
+            <p><strong>密码:</strong> 123456</p>
+            <p><a href="/login">立即登录</a> | <a href="/debug-login">返回调试页</a></p>
+        </body>
+        </html>
+        """
+        
+    except Exception as e:
+        return f"""
+        <html>
+        <body style="font-family: Arial; margin: 20px;">
+            <h1>❌ 创建失败</h1>
+            <p>错误: {str(e)}</p>
+            <p><a href="/debug-login">返回调试页</a></p>
+        </body>
+        </html>
+        """
 
 
 if __name__ == '__main__':
